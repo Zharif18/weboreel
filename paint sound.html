@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SONICA — Paint with Sound</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,500;1,300&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --bg: #0c0c0f;
+  --ui: #f0ece0;
+  --ui-dim: rgba(240,236,224,0.35);
+  --ui-faint: rgba(240,236,224,0.08);
+  --accent: #ff4d1c;
+}
+
+html, body {
+  width:100%; height:100%;
+  background: var(--bg);
+  overflow: hidden;
+  font-family: 'DM Mono', monospace;
+  color: var(--ui);
+  touch-action: none;
+}
+
+/* ── CANVAS ── */
+#c {
+  position: fixed; inset: 0;
+  width: 100%; height: 100%;
+  cursor: crosshair;
+}
+
+/* ── GRAIN OVERLAY ── */
+#grain {
+  position: fixed; inset: 0;
+  opacity: .04;
+  pointer-events: none; z-index: 5;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
+
+/* ── TOP BAR ── */
+#topbar {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: 52px;
+  display: flex; align-items: center;
+  padding: 0 1.5rem;
+  gap: 1.5rem;
+  z-index: 20;
+  background: linear-gradient(to bottom, rgba(12,12,15,.95), transparent);
+  border-bottom: 1px solid var(--ui-faint);
+}
+
+#logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.6rem;
+  letter-spacing: .12em;
+  color: var(--ui);
+  line-height: 1;
+  flex-shrink: 0;
+}
+#logo span { color: var(--accent); }
+
+.sep { width: 1px; height: 24px; background: var(--ui-faint); flex-shrink:0; }
+
+#mode-label {
+  font-size: .6rem;
+  letter-spacing: .3em;
+  text-transform: uppercase;
+  color: var(--ui-dim);
+  flex-shrink: 0;
+}
+
+/* BRUSH SWATCHES */
+#brushes {
+  display: flex; gap: .5rem; align-items: center;
+}
+.swatch {
+  width: 28px; height: 28px; border-radius: 50%;
+  cursor: pointer; border: 2px solid transparent;
+  transition: transform .15s, border-color .15s;
+  flex-shrink: 0;
+}
+.swatch:hover { transform: scale(1.18); }
+.swatch.active { border-color: var(--ui); }
+
+/* TOP RIGHT CONTROLS */
+#controls {
+  margin-left: auto;
+  display: flex; gap: .6rem; align-items: center;
+}
+.ctrl-btn {
+  font-family: 'DM Mono', monospace;
+  font-size: .58rem;
+  letter-spacing: .2em;
+  padding: .35rem .75rem;
+  border: 1px solid var(--ui-faint);
+  background: var(--ui-faint);
+  color: var(--ui-dim);
+  cursor: pointer;
+  transition: all .2s;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.ctrl-btn:hover { border-color: var(--ui-dim); color: var(--ui); background: rgba(240,236,224,0.12); }
+.ctrl-btn.danger:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── BOTTOM BAR ── */
+#bottombar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  height: 48px;
+  display: flex; align-items: center;
+  padding: 0 1.5rem;
+  gap: 1.5rem;
+  z-index: 20;
+  background: linear-gradient(to top, rgba(12,12,15,.9), transparent);
+  border-top: 1px solid var(--ui-faint);
+}
+
+#note-display {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.4rem;
+  letter-spacing: .1em;
+  color: var(--accent);
+  min-width: 90px;
+  transition: color .1s;
+}
+
+#stroke-count {
+  font-size: .58rem;
+  letter-spacing: .25em;
+  color: var(--ui-faint);
+}
+
+#size-wrap {
+  display: flex; align-items: center; gap: .6rem; margin-left: auto;
+}
+#size-label { font-size: .58rem; letter-spacing: .2em; color: var(--ui-faint); }
+#size-slider {
+  -webkit-appearance: none;
+  width: 80px; height: 2px;
+  background: var(--ui-faint); outline: none; border: none;
+  cursor: pointer;
+}
+#size-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--ui);
+  cursor: pointer;
+}
+
+/* ── INTRO OVERLAY ── */
+#intro {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 100;
+  padding: 2rem;
+  transition: opacity .8s ease, transform .8s ease;
+}
+#intro.gone { opacity: 0; pointer-events: none; transform: scale(1.03); }
+
+#intro h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(4rem, 16vw, 10rem);
+  letter-spacing: .08em;
+  line-height: .9;
+  text-align: center;
+  color: var(--ui);
+}
+#intro h1 em { color: var(--accent); font-style: normal; }
+
+#intro p {
+  font-size: clamp(.75rem, 2vw, .9rem);
+  letter-spacing: .25em;
+  color: var(--ui-dim);
+  text-align: center;
+  margin: 1.8rem 0 2.5rem;
+  line-height: 2;
+  max-width: 500px;
+  text-transform: uppercase;
+}
+
+.start-btn {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: .3em;
+  padding: .8rem 3rem;
+  border: 1px solid var(--ui);
+  background: transparent;
+  color: var(--ui);
+  cursor: pointer;
+  position: relative; overflow: hidden;
+  transition: color .3s;
+}
+.start-btn::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: var(--accent);
+  transform: translateX(-101%);
+  transition: transform .35s cubic-bezier(.77,0,.18,1);
+  z-index: -1;
+}
+.start-btn:hover::before { transform: translateX(0); }
+.start-btn:hover { border-color: var(--accent); }
+
+/* ── RIPPLE HINT ── */
+#hint {
+  position: fixed;
+  pointer-events: none; z-index: 15;
+  display: none;
+}
+.ripple-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.15);
+  transform: translate(-50%,-50%) scale(0);
+  animation: rippleOut .8s ease forwards;
+}
+@keyframes rippleOut {
+  to { transform: translate(-50%,-50%) scale(1); opacity: 0; }
+}
+
+/* ── SAVE FLASH ── */
+#save-flash {
+  position: fixed; top: 70px; right: 1.5rem;
+  font-size: .6rem; letter-spacing: .25em;
+  color: var(--accent); z-index: 50;
+  opacity: 0; transition: opacity .3s;
+  pointer-events: none;
+  text-transform: uppercase;
+}
+#save-flash.show { opacity: 1; }
+
+/* ── MODE INDICATOR ── */
+#active-mode {
+  font-size: .58rem; letter-spacing: .2em;
+  color: var(--ui-dim);
+  text-transform: uppercase;
+}
+
+/* scrollbar hidden */
+::-webkit-scrollbar { display: none; }
+
+@media (max-width: 500px) {
+  #mode-label, .sep, #stroke-count { display: none; }
+  #size-wrap { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- GRAIN -->
+<div id="grain"></div>
+
+<!-- MAIN CANVAS -->
+<canvas id="c"></canvas>
+
+<!-- SAVE FLASH -->
+<div id="save-flash">SAVED TO DISK</div>
+
+<!-- RIPPLE HINT -->
+<div id="hint"></div>
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <div id="logo">SON<span>ICA</span></div>
+  <div class="sep"></div>
+  <div id="mode-label">PAINT WITH SOUND</div>
+  <div class="sep"></div>
+
+  <!-- Brush color swatches -->
+  <div id="brushes">
+    <div class="swatch active" data-color="fire"    style="background:radial-gradient(circle at 35% 35%,#ff8c42,#ff2d00)" title="Fire — Major"></div>
+    <div class="swatch"        data-color="ice"     style="background:radial-gradient(circle at 35% 35%,#a8edff,#3a7bd5)" title="Ice — Minor"></div>
+    <div class="swatch"        data-color="neon"    style="background:radial-gradient(circle at 35% 35%,#39ff14,#00bb00)" title="Neon — Pentatonic"></div>
+    <div class="swatch"        data-color="plasma"  style="background:radial-gradient(circle at 35% 35%,#da70d6,#7b2ff7)" title="Plasma — Blues"></div>
+    <div class="swatch"        data-color="gold"    style="background:radial-gradient(circle at 35% 35%,#ffd700,#b8860b)" title="Gold — Chromatic"></div>
+    <div class="swatch"        data-color="void"    style="background:radial-gradient(circle at 35% 35%,#888,#111)" title="Void — Silence"></div>
+  </div>
+
+  <div id="controls">
+    <span id="active-mode">BRUSH</span>
+    <div class="sep"></div>
+    <button class="ctrl-btn" onclick="toggleMode()">MODE: <span id="mode-txt">ECHO</span></button>
+    <button class="ctrl-btn" onclick="saveCanvas()">SAVE</button>
+    <button class="ctrl-btn danger" onclick="clearCanvas()">CLEAR</button>
+  </div>
+</div>
+
+<!-- BOTTOM BAR -->
+<div id="bottombar">
+  <div id="note-display">—</div>
+  <div class="sep"></div>
+  <div id="stroke-count">0 STROKES</div>
+  <div id="size-wrap">
+    <span id="size-label">SIZE</span>
+    <input type="range" id="size-slider" min="2" max="60" value="18">
+  </div>
+</div>
+
+<!-- INTRO -->
+<div id="intro">
+  <h1>PAINT<br><em>SOUND</em></h1>
+  <p>Every brushstroke is a note.<br>Every color is a scale.<br>Every gesture is a melody.</p>
+  <button class="start-btn" onclick="dismissIntro()">START CREATING</button>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+//  SONICA — Paint with Sound
+//  Pure HTML/CSS/JS — No backend, no libraries
+// ══════════════════════════════════════════════════
+
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
+let W, H;
+
+function resize() {
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  // redraw background on resize
+  ctx.fillStyle = '#0c0c0f';
+  ctx.fillRect(0,0,W,H);
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ── AUDIO ENGINE ──────────────────────────────────
+let ac; // AudioContext — created on first interaction
+function ensureAC() {
+  if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)();
+  if (ac.state === 'suspended') ac.resume();
+}
+
+// Reverb (convolver with noise IR)
+let reverbNode, reverbGain;
+function buildReverb() {
+  const len = ac.sampleRate * 2.5;
+  const buf = ac.createBuffer(2, len, ac.sampleRate);
+  for (let ch = 0; ch < 2; ch++) {
+    const data = buf.getChannelData(ch);
+    for (let i = 0; i < len; i++) data[i] = (Math.random()*2-1) * Math.pow(1 - i/len, 2.5);
+  }
+  reverbNode = ac.createConvolver();
+  reverbNode.buffer = buf;
+  reverbGain = ac.createGain();
+  reverbGain.gain.value = 0.28;
+  reverbNode.connect(reverbGain);
+  reverbGain.connect(ac.destination);
+}
+
+// SCALES (freq in Hz, based on C4=261.63)
+const SCALES = {
+  fire:   [261.63,293.66,329.63,349.23,392,440,493.88,523.25,587.33,659.25,698.46,783.99], // C major
+  ice:    [261.63,293.66,311.13,349.23,392,415.30,466.16,523.25,587.33,622.25],             // C minor
+  neon:   [261.63,293.66,329.63,392,440,523.25,587.33,659.25,783.99,880],                   // pentatonic
+  plasma: [261.63,293.66,311.13,369.99,392,415.30,466.16,523.25],                           // blues
+  gold:   [261.63,277.18,293.66,311.13,329.63,349.23,369.99,392,415.30,440,466.16,493.88],  // chromatic
+  void:   []
+};
+
+const WAVEFORMS = { fire:'sawtooth', ice:'sine', neon:'square', plasma:'triangle', gold:'sine', void:'sine' };
+
+const COLOR_PALETTES = {
+  fire:   (t) => `hsla(${20 + t*40},100%,${50+t*20}%,`,
+  ice:    (t) => `hsla(${190 + t*30},80%,${60+t*20}%,`,
+  neon:   (t) => `hsla(${110 + t*60},100%,${50+t*20}%,`,
+  plasma: (t) => `hsla(${270 + t*60},85%,${55+t*20}%,`,
+  gold:   (t) => `hsla(${40 + t*20},90%,${55+t*20}%,`,
+  void:   (t) => `hsla(${0},0%,${30+t*50}%,`
+};
+
+const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+
+function playNote(freq, wave, vol=0.12, dur=0.5) {
+  if (!ac || freq === 0) return;
+  const osc  = ac.createOscillator();
+  const gain = ac.createGain();
+  const filt = ac.createBiquadFilter();
+
+  osc.type = wave;
+  osc.frequency.setValueAtTime(freq, ac.currentTime);
+
+  filt.type = 'lowpass';
+  filt.frequency.setValueAtTime(2000 + freq * 2, ac.currentTime);
+
+  gain.gain.setValueAtTime(0, ac.currentTime);
+  gain.gain.linearRampToValueAtTime(vol, ac.currentTime + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + dur);
+
+  osc.connect(filt);
+  filt.connect(gain);
+  gain.connect(ac.destination);
+  if (reverbNode) { gain.connect(reverbNode); }
+  osc.start();
+  osc.stop(ac.currentTime + dur + 0.05);
+}
+
+function freqToNoteName(freq) {
+  const midi = Math.round(12 * Math.log2(freq / 440) + 69);
+  return NOTE_NAMES[midi % 12] + Math.floor(midi / 12 - 1);
+}
+
+// ── STATE ─────────────────────────────────────────
+let activeColor  = 'fire';
+let drawMode     = 'echo';   // echo | smear | spray | ripple
+let brushSize    = 18;
+let isDrawing    = false;
+let lastX        = 0, lastY = 0;
+let strokeCount  = 0;
+let lastNoteTime = 0;
+let echoTrails   = [];       // for echo mode
+let particles    = [];       // living particles
+
+const MODES = ['echo','smear','spray','ripple'];
+let modeIdx = 0;
+
+// ── CANVAS RENDERING ──────────────────────────────
+
+// Echo mode: draw luminous blobs + schedule decaying echoes
+function drawEcho(x, y, pressure=1) {
+  const scale = SCALES[activeColor];
+  if (scale.length === 0) return; // void = silence
+  const t = (x / W);
+  const scaleIdx = Math.floor(t * scale.length) % scale.length;
+  const freq = scale[scaleIdx] * (1 + (y / H) * 0.5); // y controls octave
+
+  const colorFn = COLOR_PALETTES[activeColor];
+  const brightness = 0.6 + pressure * 0.4;
+  const r = brushSize * pressure;
+
+  // Main blob
+  const grad = ctx.createRadialGradient(x,y,0,x,y,r*2.2);
+  grad.addColorStop(0,   colorFn(brightness) + '0.9)');
+  grad.addColorStop(0.4, colorFn(brightness*0.8) + '0.4)');
+  grad.addColorStop(1,   colorFn(0.3) + '0)');
+  ctx.beginPath();
+  ctx.arc(x,y,r*2.2,0,Math.PI*2);
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Bright core
+  ctx.beginPath();
+  ctx.arc(x,y,r*0.6,0,Math.PI*2);
+  ctx.fillStyle = colorFn(1.0)+'0.95)';
+  ctx.fill();
+
+  // Echo rings queued
+  echoTrails.push({ x,y,r,color:colorFn, age:0, maxAge:40, freq, scaleIdx });
+
+  // Sound
+  const now = Date.now();
+  if (now - lastNoteTime > 55) {
+    playNote(freq, WAVEFORMS[activeColor], 0.10, 0.45);
+    lastNoteTime = now;
+    document.getElementById('note-display').textContent = freqToNoteName(freq);
+  }
+}
+
+// Smear: paint thick gestural strokes
+function drawSmear(x, y, px, py) {
+  const scale = SCALES[activeColor];
+  if (!scale.length) return;
+  const t = x / W;
+  const freq = scale[Math.floor(t * scale.length) % scale.length];
+  const colorFn = COLOR_PALETTES[activeColor];
+
+  ctx.beginPath();
+  ctx.moveTo(px, py);
+  ctx.lineTo(x, y);
+  ctx.strokeStyle = colorFn(0.7) + '0.85)';
+  ctx.lineWidth = brushSize * 1.8;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  // Fuzzy edge
+  ctx.beginPath();
+  ctx.moveTo(px, py);
+  ctx.lineTo(x, y);
+  ctx.strokeStyle = colorFn(1.0) + '0.25)';
+  ctx.lineWidth = brushSize * 3.5;
+  ctx.stroke();
+
+  const now = Date.now();
+  if (now - lastNoteTime > 40) {
+    playNote(freq, WAVEFORMS[activeColor], 0.08, 0.3);
+    lastNoteTime = now;
+    document.getElementById('note-display').textContent = freqToNoteName(freq);
+  }
+}
+
+// Spray: scatter glowing dots
+function drawSpray(x, y) {
+  const scale = SCALES[activeColor];
+  if (!scale.length) return;
+  const colorFn = COLOR_PALETTES[activeColor];
+  const count = Math.floor(brushSize * 1.2);
+  const spread = brushSize * 3;
+
+  for (let i = 0; i < count; i++) {
+    const angle  = Math.random() * Math.PI * 2;
+    const dist   = Math.random() * spread;
+    const dx     = x + Math.cos(angle) * dist;
+    const dy     = y + Math.sin(angle) * dist;
+    const sz     = Math.random() * 2.5 + 0.5;
+    const t      = Math.random();
+    ctx.beginPath();
+    ctx.arc(dx, dy, sz, 0, Math.PI*2);
+    ctx.fillStyle = colorFn(t) + (0.3 + t*0.7) + ')';
+    ctx.fill();
+  }
+
+  const freq = scale[Math.floor(Math.random() * scale.length)];
+  const now = Date.now();
+  if (now - lastNoteTime > 80) {
+    playNote(freq * (0.9 + Math.random()*0.3), WAVEFORMS[activeColor], 0.06, 0.6);
+    lastNoteTime = now;
+    document.getElementById('note-display').textContent = freqToNoteName(freq);
+  }
+}
+
+// Ripple: expanding rings
+function drawRipple(x, y) {
+  const scale = SCALES[activeColor];
+  if (!scale.length) return;
+  const t = x / W;
+  const freq = scale[Math.floor(t * scale.length) % scale.length];
+  const colorFn = COLOR_PALETTES[activeColor];
+
+  // Spawn ripple particle
+  particles.push({ x, y, r:4, maxR: brushSize*6, color:colorFn, age:0, maxAge:60, freq });
+
+  const now = Date.now();
+  if (now - lastNoteTime > 100) {
+    playNote(freq, 'sine', 0.12, 0.8);
+    lastNoteTime = now;
+    document.getElementById('note-display').textContent = freqToNoteName(freq);
+  }
+}
+
+// ── ANIMATION LOOP ────────────────────────────────
+function tick() {
+  // Fade canvas slightly (trail effect)
+  ctx.fillStyle = 'rgba(12,12,15,0.015)';
+  ctx.fillRect(0,0,W,H);
+
+  // Update echo trails
+  echoTrails = echoTrails.filter(e => {
+    e.age++;
+    const progress = e.age / e.maxAge;
+    const r = e.r * 2.2 + progress * e.r * 8;
+    const alpha = (1 - progress) * 0.25;
+    ctx.beginPath();
+    ctx.arc(e.x, e.y, r, 0, Math.PI*2);
+    ctx.strokeStyle = e.color(1-progress) + alpha + ')';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    return e.age < e.maxAge;
+  });
+
+  // Update ripple particles
+  particles = particles.filter(p => {
+    p.age++;
+    const progress = p.age / p.maxAge;
+    const r = p.r + (p.maxR - p.r) * Math.pow(progress, 0.5);
+    const alpha = (1 - progress) * 0.5;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, r, 0, Math.PI*2);
+    ctx.strokeStyle = p.color(1-progress) + alpha + ')';
+    ctx.lineWidth = 1.5 * (1-progress);
+    ctx.stroke();
+    // inner ring
+    if (r > 20) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, r*0.6, 0, Math.PI*2);
+      ctx.strokeStyle = p.color(0.8) + (alpha*0.5) + ')';
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+    }
+    return p.age < p.maxAge;
+  });
+
+  requestAnimationFrame(tick);
+}
+tick();
+
+// ── INPUT HANDLING ────────────────────────────────
+function getPos(e) {
+  if (e.touches) {
+    return { x: e.touches[0].clientX, y: e.touches[0].clientY, pressure: e.touches[0].force || 0.5 };
+  }
+  return { x: e.clientX, y: e.clientY, pressure: 0.5 };
+}
+
+function onStart(e) {
+  e.preventDefault();
+  ensureAC();
+  if (!reverbNode) buildReverb();
+  isDrawing = true;
+  const {x,y} = getPos(e);
+  lastX = x; lastY = y;
+  strokeCount++;
+  document.getElementById('stroke-count').textContent = strokeCount + ' STROKES';
+
+  if (drawMode === 'echo') drawEcho(x, y);
+  else if (drawMode === 'ripple') drawRipple(x, y);
+}
+
+function onMove(e) {
+  e.preventDefault();
+  if (!isDrawing) return;
+  const {x,y,pressure} = getPos(e);
+
+  if (drawMode === 'echo')   drawEcho(x, y, pressure);
+  else if (drawMode === 'smear')  drawSmear(x, y, lastX, lastY);
+  else if (drawMode === 'spray')  drawSpray(x, y);
+  else if (drawMode === 'ripple') drawRipple(x, y);
+
+  lastX = x; lastY = y;
+}
+
+function onEnd(e) {
+  e.preventDefault();
+  isDrawing = false;
+  document.getElementById('note-display').textContent = '—';
+}
+
+canvas.addEventListener('mousedown',  onStart, {passive:false});
+canvas.addEventListener('mousemove',  onMove,  {passive:false});
+canvas.addEventListener('mouseup',    onEnd,   {passive:false});
+canvas.addEventListener('mouseleave', onEnd,   {passive:false});
+canvas.addEventListener('touchstart', onStart, {passive:false});
+canvas.addEventListener('touchmove',  onMove,  {passive:false});
+canvas.addEventListener('touchend',   onEnd,   {passive:false});
+
+// ── SIZE SLIDER ───────────────────────────────────
+document.getElementById('size-slider').addEventListener('input', function() {
+  brushSize = parseInt(this.value);
+});
+
+// ── BRUSH SWATCHES ────────────────────────────────
+document.querySelectorAll('.swatch').forEach(s => {
+  s.addEventListener('click', () => {
+    document.querySelectorAll('.swatch').forEach(x => x.classList.remove('active'));
+    s.classList.add('active');
+    activeColor = s.dataset.color;
+    ensureAC();
+    if (!reverbNode) buildReverb();
+    // Play a chord preview
+    const scale = SCALES[activeColor];
+    if (scale.length > 2) {
+      [0,2,4].forEach((i,n) => setTimeout(() => playNote(scale[i], WAVEFORMS[activeColor], 0.09, 0.4), n*80));
+    }
+  });
+});
+
+// ── MODE TOGGLE ───────────────────────────────────
+function toggleMode() {
+  modeIdx = (modeIdx + 1) % MODES.length;
+  drawMode = MODES[modeIdx];
+  document.getElementById('mode-txt').textContent = drawMode.toUpperCase();
+  document.getElementById('active-mode').textContent = drawMode.toUpperCase();
+  ensureAC();
+  if (!reverbNode) buildReverb();
+  playNote(440, 'sine', 0.07, 0.2);
+}
+
+// ── CLEAR ─────────────────────────────────────────
+function clearCanvas() {
+  ctx.fillStyle = '#0c0c0f';
+  ctx.fillRect(0,0,W,H);
+  echoTrails = [];
+  particles  = [];
+  strokeCount = 0;
+  document.getElementById('stroke-count').textContent = '0 STROKES';
+  document.getElementById('note-display').textContent = '—';
+  ensureAC();
+  if (!reverbNode) buildReverb();
+  // Descending sweep
+  [880,660,440,220].forEach((f,i) => setTimeout(() => playNote(f,'sine',0.06,0.3),i*80));
+}
+
+// ── SAVE ──────────────────────────────────────────
+function saveCanvas() {
+  const link = document.createElement('a');
+  link.download = 'sonica-' + Date.now() + '.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  const fl = document.getElementById('save-flash');
+  fl.classList.add('show');
+  setTimeout(() => fl.classList.remove('show'), 1800);
+}
+
+// ── INTRO DISMISS ─────────────────────────────────
+function dismissIntro() {
+  document.getElementById('intro').classList.add('gone');
+  ensureAC();
+  if (!reverbNode) buildReverb();
+  // Rising arpeggio welcome
+  const scale = SCALES['fire'];
+  scale.slice(0,6).forEach((f,i) => setTimeout(() => playNote(f,'sine',0.09,0.5),i*90));
+}
+
+// ── KEYBOARD SHORTCUTS ────────────────────────────
+window.addEventListener('keydown', e => {
+  if (e.key === 'c' || e.key === 'C') clearCanvas();
+  if (e.key === 's' || e.key === 'S') saveCanvas();
+  if (e.key === 'm' || e.key === 'M') toggleMode();
+  if (e.key >= '1' && e.key <= '6') {
+    const colors = ['fire','ice','neon','plasma','gold','void'];
+    const idx = parseInt(e.key)-1;
+    document.querySelectorAll('.swatch')[idx]?.click();
+  }
+});
+
+// ── IDLE AUTO-DEMO ────────────────────────────────
+// If user hasn't interacted for 4s on intro, animate brushstrokes as a demo
+let demoTimer, demoRunning = false;
+demoTimer = setTimeout(() => {
+  if (!document.getElementById('intro').classList.contains('gone')) return;
+}, 4000);
+</script>
+</body>
+</html>
