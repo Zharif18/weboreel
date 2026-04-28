@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Battle Grounds — Skill Trainer</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#07090D;--bg2:#0D1117;--bg3:#111822;
+  --panel:#0F1923;--panel2:#141F2E;
+  --green:#00FF87;--green2:#00C46A;--green3:rgba(0,255,135,0.08);
+  --red:#FF3B3B;--red2:#CC2020;
+  --blue:#00B4FF;--blue2:#0090CC;
+  --orange:#FF9500;--yellow:#FFD60A;
+  --white:#E8EDF5;--dim:#7A8A9A;--faint:#1A2535;
+  --gold:#FFD700;--purple:#C084FC;
+}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg)}
+body{font-family:'Rajdhani',sans-serif;color:var(--white);position:relative;cursor:crosshair}
+body::before{content:'';position:fixed;inset:0;z-index:9000;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.04) 2px,rgba(0,0,0,0.04) 4px)}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:10}
+.screen.active{display:flex}
+input,button,select{cursor:pointer}
+
+/* ── TUTORIAL OVERLAY ── */
+#tutorialOverlay{position:fixed;inset:0;z-index:8500;background:rgba(7,9,13,0.97);display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:0}
+#tutorialOverlay.active{display:flex}
+.tut-header{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:4px;color:var(--dim);margin-bottom:8px;text-align:center}
+.tut-title{font-family:'Orbitron',sans-serif;font-size:clamp(18px,4vw,30px);font-weight:900;color:var(--green);letter-spacing:3px;margin-bottom:6px;text-align:center}
+.tut-mission-icon{font-size:52px;margin-bottom:12px}
+.tut-steps{width:100%;max-width:560px;display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
+.tut-step{background:var(--panel);border:1px solid var(--faint);border-radius:8px;padding:14px 16px;display:flex;align-items:flex-start;gap:14px}
+.tut-step-num{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:900;color:var(--green);opacity:0.6;flex-shrink:0;line-height:1;min-width:24px}
+.tut-step-text{font-size:13px;line-height:1.6;color:var(--white)}
+.tut-step-text b{color:var(--green);font-weight:700}
+.tut-tip{background:rgba(0,180,255,0.06);border:1px solid rgba(0,180,255,0.2);border-radius:8px;padding:12px 16px;max-width:560px;width:100%;font-size:12px;color:var(--blue);line-height:1.6;font-family:'Share Tech Mono',monospace;margin-bottom:20px;text-align:center}
+.tut-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.tut-btn{font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:3px;padding:12px 30px;border-radius:4px;cursor:pointer;transition:all 0.18s;border:1.5px solid}
+.tut-btn.primary{background:var(--green);color:var(--bg);border-color:var(--green)}.tut-btn.primary:hover{background:var(--green2)}
+.tut-btn.sec{background:transparent;color:var(--dim);border-color:rgba(122,138,154,0.3)}.tut-btn.sec:hover{color:var(--white);border-color:rgba(255,255,255,0.2)}
+.tut-steps-dots{display:flex;gap:6px;justify-content:center;margin-bottom:16px}
+.tut-dot{width:20px;height:3px;border-radius:99px;background:var(--faint);transition:background 0.3s}
+.tut-dot.active{background:var(--green)}
+
+/* ── SKIP ── */
+#skipBtn{position:fixed;bottom:16px;right:16px;z-index:700;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2px;padding:8px 16px;border-radius:4px;cursor:pointer;background:rgba(7,9,13,0.85);border:1px solid rgba(122,138,154,0.25);color:var(--dim);transition:all 0.2s;display:none;backdrop-filter:blur(4px)}
+#skipBtn:hover{border-color:var(--red);color:var(--red);background:rgba(255,59,59,0.06)}
+#skipBtn.show{display:block}
+#skipConfirm{position:fixed;inset:0;z-index:7500;background:rgba(7,9,13,0.92);display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+#skipConfirm.show{display:flex}
+.skip-confirm-box{background:var(--panel);border:1px solid rgba(255,59,59,0.3);border-radius:12px;padding:28px 32px;text-align:center;max-width:320px;width:90%}
+.skip-confirm-title{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:900;color:var(--red);letter-spacing:2px;margin-bottom:8px}
+.skip-confirm-sub{font-size:12px;color:var(--dim);margin-bottom:20px;line-height:1.6;font-family:'Share Tech Mono',monospace}
+.skip-confirm-btns{display:flex;gap:10px}
+.skip-yes{flex:1;font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px;padding:10px;border-radius:4px;border:1.5px solid var(--red);color:var(--red);background:transparent;cursor:pointer;transition:all 0.18s}
+.skip-yes:hover{background:rgba(255,59,59,0.1)}
+.skip-no{flex:1;font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px;padding:10px;border-radius:4px;border:1.5px solid var(--green);color:var(--bg);background:var(--green);cursor:pointer;transition:all 0.18s}
+.skip-no:hover{background:var(--green2)}
+
+/* ── HUD ── */
+#hud{position:fixed;top:0;left:0;right:0;z-index:500;padding:8px 16px;background:rgba(7,9,13,0.92);border-bottom:1px solid rgba(0,255,135,0.12);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+#hud.show{display:flex}
+.hud-block{display:flex;flex-direction:column;align-items:center;gap:2px}
+.hud-label{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--dim);text-transform:uppercase}
+.hud-val{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;color:var(--green)}
+.hud-val.red{color:var(--red)}.hud-val.blue{color:var(--blue)}.hud-val.gold{color:var(--gold)}
+.xp-bar-wrap{flex:1;min-width:80px;max-width:180px}
+.xp-bar-track{height:4px;background:var(--faint);border-radius:99px;overflow:hidden;margin-top:4px}
+.xp-bar-fill{height:100%;background:linear-gradient(90deg,var(--green2),var(--green));border-radius:99px;transition:width 0.6s}
+
+/* ── INTRO ── */
+#introScreen{background:var(--bg);text-align:center;padding:20px;gap:0}
+.intro-bg{position:absolute;inset:0;overflow:hidden}
+.intro-bg canvas{width:100%;height:100%}
+.intro-content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:0}
+.game-logo{font-family:'Orbitron',sans-serif;font-size:clamp(28px,7vw,72px);font-weight:900;letter-spacing:4px;line-height:1;color:transparent;-webkit-text-stroke:2px var(--green);text-shadow:0 0 40px rgba(0,255,135,0.3);animation:logoPulse 3s ease-in-out infinite}
+@keyframes logoPulse{0%,100%{text-shadow:0 0 40px rgba(0,255,135,0.3)}50%{text-shadow:0 0 80px rgba(0,255,135,0.6)}}
+.game-sub{font-family:'Share Tech Mono',monospace;font-size:clamp(9px,1.8vw,13px);letter-spacing:6px;color:var(--dim);margin:8px 0 24px}
+.rank-preview{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:460px;width:100%;margin-bottom:28px}
+.rank-card{background:var(--panel);border:1px solid var(--faint);border-radius:8px;padding:12px 8px;text-align:center}
+.rank-icon{font-size:24px;margin-bottom:3px}.rank-name{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;color:var(--dim)}
+.rank-pts{font-size:11px;color:var(--green);font-weight:600;margin-top:2px}
+.start-btn{font-family:'Orbitron',sans-serif;font-weight:700;font-size:clamp(12px,2.5vw,16px);letter-spacing:3px;padding:14px 48px;background:transparent;border:2px solid var(--green);color:var(--green);border-radius:4px;cursor:pointer;position:relative;overflow:hidden;transition:all 0.2s}
+.start-btn::before{content:'';position:absolute;inset:0;background:var(--green);transform:translateX(-100%);transition:transform 0.25s;z-index:-1}
+.start-btn:hover::before{transform:translateX(0)}.start-btn:hover{color:var(--bg)}
+
+/* ── MISSIONS ── */
+#missionScreen{background:var(--bg);padding:70px 16px 80px;justify-content:flex-start;overflow-y:auto;align-items:center}
+.ms-title{font-family:'Orbitron',sans-serif;font-size:clamp(16px,4vw,28px);font-weight:900;letter-spacing:3px;color:var(--green);text-align:center;margin-bottom:3px}
+.ms-sub{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:4px;color:var(--dim);margin-bottom:20px;text-align:center}
+.missions-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;width:100%;max-width:960px}
+.mission-card{background:var(--panel);border:1px solid var(--faint);border-radius:10px;padding:14px 16px 18px;cursor:pointer;position:relative;overflow:hidden;transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1);display:flex;flex-direction:column;gap:0}
+.mission-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--mc,#00FF87) 0%,transparent 60%);opacity:0;transition:opacity 0.2s}
+.mission-card:hover{transform:translateY(-4px) scale(1.02);border-color:var(--mc,var(--green));box-shadow:0 12px 32px rgba(0,0,0,0.4)}
+.mission-card:hover::before{opacity:0.06}
+.mc-badge-row{display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap;min-height:20px}
+.tut-badge{font-size:9px;padding:2px 7px;background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.3);color:var(--orange);border-radius:3px;font-family:'Share Tech Mono',monospace;letter-spacing:1px;white-space:nowrap;flex-shrink:0;cursor:pointer}
+.tut-badge:hover{background:rgba(255,149,0,0.2)}
+.mc-diff{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;padding:2px 8px;border-radius:3px;border:1px solid;white-space:nowrap;flex-shrink:0}
+.diff-easy{color:#00FF87;border-color:rgba(0,255,135,0.3);background:rgba(0,255,135,0.06)}
+.diff-mid{color:#FF9500;border-color:rgba(255,149,0,0.3);background:rgba(255,149,0,0.06)}
+.diff-hard{color:#FF3B3B;border-color:rgba(255,59,59,0.3);background:rgba(255,59,59,0.06)}
+.mc-body{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px}
+.mc-icon{font-size:30px;flex-shrink:0;line-height:1}
+.mc-text{flex:1;min-width:0}
+.mc-title{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;margin-bottom:4px;letter-spacing:1px}
+.mc-desc{font-size:12px;color:var(--dim);line-height:1.4;margin-bottom:10px}
+.mc-skills{display:flex;gap:5px;flex-wrap:wrap}
+.skill-tag{font-size:10px;padding:2px 6px;background:var(--faint);border-radius:3px;color:var(--dim);letter-spacing:1px;font-family:'Share Tech Mono',monospace}
+.mc-xp{font-family:'Orbitron',sans-serif;font-size:10px;color:var(--gold);margin-top:10px;letter-spacing:2px}
+.mc-bar{height:3px;background:var(--faint);border-radius:99px;margin-top:8px;overflow:hidden}
+.mc-bar-fill{height:100%;background:var(--mc,var(--green));border-radius:99px}
+
+/* ── GAME ── */
+#gameScreen{background:var(--bg2);padding:0}
+#gameCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#gameOverlay{position:absolute;inset:0;pointer-events:none;z-index:100}
+.g-instruction{position:absolute;bottom:80px;left:50%;transform:translateX(-50%);font-family:'Orbitron',sans-serif;font-size:clamp(10px,1.8vw,13px);letter-spacing:3px;color:var(--green);text-align:center;text-shadow:0 0 20px rgba(0,255,135,0.5);animation:instrPulse 1.5s ease-in-out infinite;pointer-events:none;white-space:nowrap}
+@keyframes instrPulse{0%,100%{opacity:0.7}50%{opacity:1}}
+.g-countdown{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Orbitron',sans-serif;font-size:clamp(60px,15vw,140px);font-weight:900;color:var(--green);text-shadow:0 0 60px rgba(0,255,135,0.6);animation:countPop 0.4s cubic-bezier(0.34,1.56,0.64,1);pointer-events:none}
+@keyframes countPop{from{transform:translate(-50%,-50%) scale(1.6);opacity:0}to{transform:translate(-50%,-50%) scale(1);opacity:1}}
+.hit-flash{position:absolute;inset:0;background:rgba(0,255,135,0.12);pointer-events:none;animation:hitFlash 0.15s ease-out forwards}
+.miss-flash{position:absolute;inset:0;background:rgba(255,59,59,0.1);pointer-events:none;animation:hitFlash 0.2s ease-out forwards}
+@keyframes hitFlash{to{opacity:0}}
+
+/* ── RESULT ── */
+#resultScreen{background:var(--bg);text-align:center;padding:70px 20px 30px;overflow-y:auto;justify-content:flex-start}
+.result-rank-badge{display:inline-block;font-family:'Orbitron',sans-serif;font-size:clamp(22px,5vw,44px);font-weight:900;letter-spacing:4px;margin-bottom:8px;padding:8px 22px;border-radius:6px;border:2px solid}
+.result-score{font-family:'Orbitron',sans-serif;font-size:clamp(36px,9vw,80px);font-weight:900;color:var(--green);text-shadow:0 0 40px rgba(0,255,135,0.4);line-height:1}
+.result-label{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:5px;color:var(--dim);margin:4px 0 16px}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;max-width:660px;width:100%;margin:0 auto 20px}
+.stat-box{background:var(--panel);border:1px solid var(--faint);border-radius:8px;padding:14px 10px}
+.stat-val{font-family:'Orbitron',sans-serif;font-size:20px;font-weight:700;color:var(--green)}
+.stat-name{font-size:10px;letter-spacing:2px;color:var(--dim);margin-top:3px;font-family:'Share Tech Mono',monospace}
+.feedback-card{background:var(--panel);border-left:3px solid var(--green);border-radius:0 8px 8px 0;padding:12px 16px;max-width:580px;width:100%;margin:0 auto 16px;text-align:left}
+.feedback-title{font-weight:700;font-size:14px;letter-spacing:1px;margin-bottom:3px}
+.feedback-tip{font-size:12px;color:var(--dim);line-height:1.6}
+.result-btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.res-btn{font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:3px;padding:10px 24px;border-radius:4px;cursor:pointer;transition:all 0.18s;border:1.5px solid}
+.res-btn.primary{background:var(--green);color:var(--bg);border-color:var(--green)}.res-btn.primary:hover{background:var(--green2)}
+.res-btn.sec{background:transparent;color:var(--green);border-color:rgba(0,255,135,0.4)}.res-btn.sec:hover{background:rgba(0,255,135,0.06)}
+
+/* ── SCOREBOARD ── */
+#scoreScreen{background:var(--bg);padding:70px 16px 30px;justify-content:flex-start;overflow-y:auto;align-items:center}
+.score-table{width:100%;max-width:580px;border-collapse:collapse;margin:16px 0}
+.score-table th{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--dim);padding:6px 10px;border-bottom:1px solid var(--faint);text-align:left}
+.score-table td{padding:10px;font-size:14px;border-bottom:1px solid rgba(26,37,53,0.5)}
+.rank-pill{font-family:'Orbitron',sans-serif;font-size:9px;padding:2px 6px;border-radius:3px;background:var(--faint);letter-spacing:1px}
+
+/* ── TOAST ── */
+#toast{position:fixed;top:68px;left:50%;transform:translateX(-50%) translateY(-10px);z-index:8000;font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:3px;padding:8px 20px;border-radius:4px;border:1px solid;opacity:0;pointer-events:none;transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.hit{background:rgba(0,255,135,0.1);border-color:rgba(0,255,135,0.4);color:var(--green)}
+#toast.miss{background:rgba(255,59,59,0.1);border-color:rgba(255,59,59,0.4);color:var(--red)}
+#toast.info{background:rgba(0,180,255,0.1);border-color:rgba(0,180,255,0.4);color:var(--blue)}
+#toast.gold{background:rgba(255,215,0,0.1);border-color:rgba(255,215,0,0.4);color:var(--gold)}
+
+.trivia-opt{background:var(--faint);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:12px 16px;cursor:pointer;font-size:14px;transition:all 0.15s;text-align:left;font-family:'Rajdhani',sans-serif;color:var(--white)}
+.trivia-opt:hover{border-color:rgba(0,255,135,0.3);background:rgba(0,255,135,0.05)}
+.trivia-opt.correct{border-color:var(--green);background:rgba(0,255,135,0.1);color:var(--green)}
+.trivia-opt.wrong{border-color:var(--red);background:rgba(255,59,59,0.1);color:var(--red)}
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<div id="skipConfirm">
+  <div class="skip-confirm-box">
+    <div class="skip-confirm-title">⚠ QUIT MISSION?</div>
+    <div class="skip-confirm-sub">Your current progress won't be saved.<br>Return to mission select?</div>
+    <div class="skip-confirm-btns">
+      <button class="skip-yes" onclick="confirmSkip()">QUIT</button>
+      <button class="skip-no" onclick="cancelSkip()">CONTINUE</button>
+    </div>
+  </div>
+</div>
+
+<button id="skipBtn" onclick="showSkipConfirm()">✕ QUIT</button>
+
+<div id="tutorialOverlay">
+  <div class="tut-header" id="tutHeader">HOW TO PLAY</div>
+  <div class="tut-mission-icon" id="tutIcon">🎯</div>
+  <div class="tut-title" id="tutTitle">AIM LAB</div>
+  <div class="tut-steps-dots" id="tutDots"></div>
+  <div class="tut-steps" id="tutSteps"></div>
+  <div class="tut-tip" id="tutTip"></div>
+  <div class="tut-btns">
+    <button class="tut-btn sec" onclick="closeTutorial()">SKIP TUTORIAL</button>
+    <button class="tut-btn primary" onclick="startAfterTutorial()">▶ START MISSION</button>
+  </div>
+</div>
+
+<div id="hud">
+  <div class="hud-block"><span class="hud-label">Mission</span><span class="hud-val blue" id="hudMission">—</span></div>
+  <div class="hud-block"><span class="hud-label">Score</span><span class="hud-val" id="hudScore">0</span></div>
+  <div class="hud-block"><span class="hud-label">Streak</span><span class="hud-val red" id="hudStreak">0</span></div>
+  <div class="xp-bar-wrap">
+    <div class="hud-label" style="text-align:center">XP <span id="hudXP" style="color:var(--gold)">0</span></div>
+    <div class="xp-bar-track"><div class="xp-bar-fill" id="xpBar"></div></div>
+  </div>
+  <div class="hud-block"><span class="hud-label">Rank</span><span class="hud-val gold" id="hudRank">RECRUIT</span></div>
+</div>
+
+<!-- INTRO -->
+<div class="screen active" id="introScreen">
+  <div class="intro-bg"><canvas id="introCanvas"></canvas></div>
+  <div class="intro-content">
+    <div class="game-logo">BATTLE<br>GROUNDS</div>
+    <div class="game-sub">// SKILL TRAINING SIMULATOR //</div>
+    <div class="rank-preview">
+      <div class="rank-card"><div class="rank-icon">🪖</div><div class="rank-name">Recruit</div><div class="rank-pts">0–199 XP</div></div>
+      <div class="rank-card"><div class="rank-icon">⭐</div><div class="rank-name">Soldier</div><div class="rank-pts">200–499 XP</div></div>
+      <div class="rank-card"><div class="rank-icon">💎</div><div class="rank-name">Ace</div><div class="rank-pts">500+ XP</div></div>
+    </div>
+    <button class="start-btn" onclick="goMissions()">▶ START TRAINING</button>
+    <p style="font-size:11px;color:var(--dim);letter-spacing:2px;font-family:'Share Tech Mono',monospace;margin-top:16px">BGMI · PUBG · FREE FIRE · COD</p>
+  </div>
+</div>
+
+<!-- MISSIONS -->
+<div class="screen" id="missionScreen">
+  <div class="ms-title">TRAINING MISSIONS</div>
+  <div class="ms-sub">// SELECT YOUR DRILL — LONG PRESS FOR TUTORIAL //</div>
+  <div class="missions-grid" id="missionsGrid"></div>
+</div>
+
+<!-- GAME -->
+<div class="screen" id="gameScreen">
+  <canvas id="gameCanvas"></canvas>
+  <div id="gameOverlay"></div>
+</div>
+
+<!-- RESULT -->
+<div class="screen" id="resultScreen">
+  <div style="margin-bottom:16px"><div id="resultRankBadge" class="result-rank-badge"></div></div>
+  <div class="result-score" id="resultScore">0</div>
+  <div class="result-label">MISSION SCORE</div>
+  <div class="stat-grid" id="statGrid"></div>
+  <div class="feedback-card">
+    <div class="feedback-title" id="feedbackTitle">Analysis</div>
+    <div class="feedback-tip" id="feedbackTip"></div>
+  </div>
+  <div class="result-btns">
+    <button class="res-btn primary" onclick="retryMission()">↺ RETRY</button>
+    <button class="res-btn sec" onclick="goMissions()">☰ MISSIONS</button>
+    <button class="res-btn sec" onclick="showScoreboard()">🏆 LEADERBOARD</button>
+  </div>
+</div>
+
+<!-- SCOREBOARD -->
+<div class="screen" id="scoreScreen">
+  <div class="ms-title">SESSION LEADERBOARD</div>
+  <div class="ms-sub">// YOUR BEST SCORES THIS SESSION //</div>
+  <table class="score-table" id="scoreTable">
+    <thead><tr><th>#</th><th>Mission</th><th>Best Score</th><th>XP</th></tr></thead>
+    <tbody id="scoreBody"></tbody>
+  </table>
+  <div style="display:flex;gap:8px;margin-top:12px">
+    <button class="res-btn primary" onclick="goMissions()">☰ MISSIONS</button>
+    <button class="res-btn sec" onclick="goIntro()">⌂ HOME</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// STATE — session only, no login
+// ═══════════════════════════════════════════════
+const STATE={
+  xp:0,streak:0,totalScore:0,
+  sessionScores:{},currentMission:null
+};
+
+const RANKS=[
+  {name:'RECRUIT',min:0,icon:'🪖',color:'#7A8A9A'},
+  {name:'SOLDIER',min:200,icon:'⭐',color:'#00B4FF'},
+  {name:'ELITE',min:400,icon:'🔵',color:'#00FF87'},
+  {name:'VETERAN',min:700,icon:'🟣',color:'#FF9500'},
+  {name:'ACE',min:1000,icon:'💎',color:'#FFD60A'},
+  {name:'CONQUEROR',min:1500,icon:'👑',color:'#FF3B3B'},
+];
+function getRank(xp){return[...RANKS].reverse().find(r=>xp>=r.min)||RANKS[0];}
+
+// ═══════════════════════════════════════════════
+// TUTORIAL
+// ═══════════════════════════════════════════════
+const TUTORIALS={
+  aim:{icon:'🎯',title:'AIM LAB',tip:'💡 PRO TIP: Keep your crosshair at head level and pre-aim where enemies will appear. Aim for smooth tracking, not frantic clicking.',steps:[{num:1,text:'<b>Red targets</b> will appear and move around the screen. Your job is to <b>click them</b> before they expire.'},{num:2,text:'Each <b>hit scores +10 points</b>. Each <b>miss costs -5 points</b>. The ring around each target shows how much time is left.'},{num:3,text:'You have <b>20 seconds</b>. Build a hit streak for bonus XP. The faster you click, the higher your accuracy score.'}]},
+  reflex:{icon:'⚡',title:'REFLEX DUEL',tip:'💡 PRO TIP: Watch for any visual change — don\'t wait for the full enemy to appear. Clicking before the enemy = penalty!',steps:[{num:1,text:'An <b>enemy character</b> will appear at a random time. <b>Click immediately</b> when you see them.'},{num:2,text:'Your <b>reaction time in milliseconds</b> is recorded. Under 200ms = insane. Under 300ms = good. Over 500ms = too slow.'},{num:3,text:'If you click <b>before the enemy appears</b>, it\'s a false start. You have <b>8 rounds</b>. Win as many as you can.'}]},
+  recoil:{icon:'💥',title:'RECOIL MASTER',tip:'💡 PRO TIP: Real gun recoil in BGMI is strongest at the START of a spray. Drag DOWN firmly for the first 10 bullets, then ease up.',steps:[{num:1,text:'<b>Hold and drag your mouse/finger downward</b> to simulate pulling down against recoil while firing.'},{num:2,text:'Keep the <b>green dot inside the green box</b>. The dot rises upward — your drag counteracts it.'},{num:3,text:'The longer you keep the dot in the zone, the higher your score. You have <b>15 seconds</b>.'}]},
+  zone:{icon:'🔵',title:'ZONE SURVIVAL',tip:'💡 PRO TIP: Always move toward zone CENTER. Check the white dotted circle to see where the next zone will be.',steps:[{num:1,text:'A <b>blue circle</b> (safe zone) will slowly shrink. If your player is <b>outside the circle</b>, you take damage.'},{num:2,text:'<b>Tap / click anywhere</b> to move your player dot. Move into the safe circle before HP hits zero.'},{num:3,text:'Watch for the <b>white dotted circle</b> — that shows the NEXT safe zone position. Rotate early!'}]},
+  grenade:{icon:'💣',title:'GRENADE TRAINER',tip:'💡 PRO TIP: Cook time + flight time = total delay. For far targets, throw early. For close targets, cook 2 seconds first.',steps:[{num:1,text:'<b>Hold down</b> to cook the grenade. A bar shows cook progress — <b>don\'t hold too long or it explodes!</b>'},{num:2,text:'<b>Release</b> to throw. The power bar oscillates — release at <b>high power</b> for far throws.'},{num:3,text:'Hit the <b>red blast zones</b>. A direct hit scores +50. Missing costs -10. New targets spawn after each clear.'}]},
+  dropzone:{icon:'✈️',title:'DROP ZONE',tip:'💡 PRO TIP: Point your parachute straight DOWN for max speed, then glide toward your target.',steps:[{num:1,text:'Your parachute drops from the top. <b>Move your mouse left/right</b> (or arrow keys) to steer toward green zones.'},{num:2,text:'<b>Landing on a zone scores points</b>. Hit multiple zones in sequence for a <b>COMBO MULTIPLIER</b>.'},{num:3,text:'You have <b>20 seconds</b>. Higher zones give more points — plan your glide path early!'}]},
+  loot:{icon:'🎒',title:'LOOT SPEED RUN',tip:'💡 PRO TIP: Priority order: Helmet → Vest → Meds → Scope → Ammo. Ignore low-priority loot if time is short.',steps:[{num:1,text:'Items are on the floor. Click them in <b>priority order</b> (shown by the # number). The next item is highlighted.'},{num:2,text:'Clicking the <b>wrong item</b> costs -20 points. Always follow: <b>Helmet #1 → Vest #2 → Medkit #3...</b>'},{num:3,text:'Clear all items to advance. You have a <b>time limit</b> — be fast but accurate. 5 rounds total.'}]},
+  trivia:{icon:'📚',title:'PEACEKEEPER QUIZ',tip:'💡 PRO TIP: Faster answers give BONUS points. Answer in under 3 seconds for max bonus. Wrong answers cost -30.',steps:[{num:1,text:'BGMI / PUBG trivia questions appear one at a time. <b>Click the correct answer</b> from four options.'},{num:2,text:'<b>Speed bonus</b>: answer in under 2 seconds for +50 bonus. Each correct = 100 base. Wrong = -30.'},{num:3,text:'There are <b>8 questions</b>. Score is based on accuracy and speed. No lifelines!'}]},
+  snipe:{icon:'🔭',title:'SNIPER RANGE',tip:'💡 PRO TIP: The scope sways like a heartbeat. Fire between heartbeat pulses. Lead fast targets.',steps:[{num:1,text:'Silhouette targets move across the range. Your view is through a <b>sniper scope that sways</b> like a heartbeat.'},{num:2,text:'<b>Click when the crosshair is on the target</b>. Headshots = full points. Body shots = 60%. Misses reset multiplier.'},{num:3,text:'You have <b>10 shots total</b>. Hit consecutively to build a <b>score multiplier up to x5</b>.'}]},
+};
+
+let pendingMissionId=null;
+const tutorialSeenSet=new Set();
+
+function showTutorial(missionId){
+  const t=TUTORIALS[missionId];if(!t)return startMission(missionId);
+  pendingMissionId=missionId;
+  document.getElementById('tutIcon').textContent=t.icon;
+  document.getElementById('tutTitle').textContent=t.title;
+  document.getElementById('tutTip').textContent=t.tip;
+  document.getElementById('tutSteps').innerHTML=t.steps.map(s=>`<div class="tut-step"><div class="tut-step-num">${s.num}</div><div class="tut-step-text">${s.text}</div></div>`).join('');
+  document.getElementById('tutDots').innerHTML=t.steps.map((_,i)=>`<div class="tut-dot${i===0?' active':''}"></div>`).join('');
+  document.getElementById('tutHeader').textContent=tutorialSeenSet.has(missionId)?'HOW TO PLAY (REVIEW)':'HOW TO PLAY — FIRST TIME';
+  tutorialSeenSet.add(missionId);
+  document.getElementById('tutorialOverlay').classList.add('active');
+}
+function closeTutorial(){document.getElementById('tutorialOverlay').classList.remove('active');}
+function startAfterTutorial(){closeTutorial();if(pendingMissionId)startMission(pendingMissionId);}
+function launchMission(id){if(!tutorialSeenSet.has(id)){showTutorial(id);}else{startMission(id);}}
+function showTutorialForMission(e,id){e.preventDefault();e.stopPropagation();showTutorial(id);}
+
+// ═══════════════════════════════════════════════
+// SKIP
+// ═══════════════════════════════════════════════
+function showSkipConfirm(){document.getElementById('skipConfirm').classList.add('show');}
+function cancelSkip(){document.getElementById('skipConfirm').classList.remove('show');}
+function confirmSkip(){document.getElementById('skipConfirm').classList.remove('show');document.getElementById('skipBtn').classList.remove('show');goMissions();}
+
+// ═══════════════════════════════════════════════
+// NAV & HUD
+// ═══════════════════════════════════════════════
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+
+function goIntro(){
+  stopGame();
+  document.getElementById('hud').classList.remove('show');
+  document.getElementById('skipBtn').classList.remove('show');
+  showScreen('introScreen');
+}
+
+function updateHUD(){
+  const r=getRank(STATE.xp);
+  document.getElementById('hudScore').textContent=STATE.totalScore;
+  document.getElementById('hudStreak').textContent=STATE.streak+(STATE.streak>=3?'🔥':'');
+  document.getElementById('hudXP').textContent=STATE.xp;
+  document.getElementById('hudRank').textContent=r.name;
+  document.getElementById('hudRank').style.color=r.color;
+  const nextRank=RANKS.find(r2=>r2.min>STATE.xp);
+  const base=r.min;const next=nextRank?nextRank.min:base+500;
+  const pct=Math.min(100,((STATE.xp-base)/(next-base))*100);
+  document.getElementById('xpBar').style.width=pct+'%';
+}
+
+function toast(msg,type='hit',duration=1500){const t=document.getElementById('toast');t.textContent=msg;t.className='show '+type;clearTimeout(t._t);t._t=setTimeout(()=>t.className='',duration);}
+
+function goMissions(){
+  stopGame();
+  document.getElementById('hud').classList.add('show');
+  document.getElementById('skipBtn').classList.remove('show');
+  updateHUD();renderMissions();showScreen('missionScreen');
+}
+
+function showScoreboard(){
+  const rows=MISSIONS.map((m,i)=>{
+    const best=STATE.sessionScores[m.id]||0;
+    const xpEarned=Math.round((best/100)*m.xpReward);
+    return`<tr>
+      <td style="color:var(--dim);font-family:'Orbitron',sans-serif;font-size:12px">${i+1}</td>
+      <td>${m.icon} ${m.title}</td>
+      <td style="font-family:'Orbitron',sans-serif;color:${best>=70?'var(--green)':best>=40?'var(--orange)':'var(--dim)'}">${best?best+'%':'—'}</td>
+      <td style="color:var(--gold);font-family:'Orbitron',sans-serif">${xpEarned?'+'+xpEarned:''}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('scoreBody').innerHTML=rows;
+  showScreen('scoreScreen');
+}
+
+// ═══════════════════════════════════════════════
+// MISSIONS DATA
+// ═══════════════════════════════════════════════
+const MISSIONS=[
+  {id:'aim',title:'AIM LAB',icon:'🎯',diff:'easy',desc:'Click moving targets fast. Each hit = +10pts. Miss = -5pts.',skills:['AIM','REACTION'],color:'#00FF87',xpReward:80,tip:{great:'Excellent tracking! Keep crosshair pre-aimed at head level.',ok:'Try leading your shots — aim where target is GOING.',poor:'Lower DPI, practice flicking to targets.'}},
+  {id:'reflex',title:'REFLEX DUEL',icon:'⚡',diff:'easy',desc:'Enemy appears — CLICK THEM before they shoot! React under 300ms.',skills:['REACTION','SPEED'],color:'#FF9500',xpReward:80,tip:{great:'Lightning reflexes! You\'d dominate close-range fights.',ok:'Your reaction is good. Work on pre-aiming common spots.',poor:'Focus on visual cues — watch for enemy movement.'}},
+  {id:'recoil',title:'RECOIL MASTER',icon:'💥',diff:'medium',desc:'Hold & drag DOWN to counteract recoil. Keep the dot in the green zone.',skills:['RECOIL CONTROL','SPRAY'],color:'#00B4FF',xpReward:120,tip:{great:'Perfect spray control! You understand weapon handling.',ok:'Try dragging down slower — most guns start fast then slow.',poor:'Practice patterns: AKM pulls down-left, M416 is straight down.'}},
+  {id:'zone',title:'ZONE SURVIVAL',icon:'🔵',diff:'medium',desc:'Blue zone closes in! Navigate to the safe zone before HP hits zero.',skills:['MAP AWARENESS','ROTATION'],color:'#FF3B3B',xpReward:120,tip:{great:'Perfect rotations! Zone awareness separates top 10 from top 1.',ok:'Always check zone timer before looting.',poor:'Move to zone CENTER, not edge. Edge = high traffic death.'}},
+  {id:'grenade',title:'GRENADE TRAINER',icon:'💣',diff:'medium',desc:'Calculate arc and throw grenades into blast zones. Time the cook!',skills:['GRENADES','UTILITY'],color:'#C084FC',xpReward:110,tip:{great:'Pro-level utility usage! Grenades win team fights before they start.',ok:'Cook the grenade 2s before throwing to deny retreats.',poor:'Remember: cook time + flight time = total. Don\'t forget flight!'}},
+  {id:'dropzone',title:'DROP ZONE',icon:'✈️',diff:'hard',desc:'Navigate your parachute to land in the hot zones. Hit multiple zones for combo XP.',skills:['LANDING','EARLY GAME'],color:'#00B4FF',xpReward:140,tip:{great:'Perfect drops! Landing in hot zones first = early gun advantage.',ok:'Glide faster by pointing straight down at 45° then pull up.',poor:'Always aim for buildings near zone center early game.'}},
+  {id:'loot',title:'LOOT SPEED RUN',icon:'🎒',diff:'medium',desc:'Click the right loot in priority order. Helmet > Vest > Medkit > Ammo.',skills:['GAME IQ','LOOTING'],color:'#FFD60A',xpReward:100,tip:{great:'Efficient looting! Less time looting = more time fighting.',ok:'Memorise priority: Level 3 helmet is always highest priority.',poor:'Don\'t hoard — only carry what you need.'}},
+  {id:'trivia',title:'PEACEKEEPER QUIZ',icon:'📚',diff:'easy',desc:'Answer BGMI/PUBG trivia questions. Speed bonus for faster answers!',skills:['GAME IQ','KNOWLEDGE'],color:'#00FF87',xpReward:90,tip:{great:'Walking encyclopedia! Game knowledge is underrated.',ok:'Keep learning mechanics — they save lives.',poor:'Study weapon stats and zone mechanics.'}},
+  {id:'snipe',title:'SNIPER RANGE',icon:'🔭',diff:'hard',desc:'Hit moving targets at distance. Lead your shots. Miss = multiplier reset.',skills:['SNIPING','PATIENCE'],color:'#993556',xpReward:160,tip:{great:'Incredible sniper! Lead calculation is your superpower.',ok:'Lead further on fast targets. At 500m+ you need almost 2x lead.',poor:'Fire on the exhale. Wait for sway to stop, then shoot.'}},
+];
+
+function renderMissions(){
+  document.getElementById('missionsGrid').innerHTML=MISSIONS.map(m=>{
+    const best=STATE.sessionScores[m.id]||0;
+    return`<div class="mission-card" style="--mc:${m.color}" onclick="launchMission('${m.id}')" oncontextmenu="showTutorialForMission(event,'${m.id}')">
+      <div class="mc-badge-row">
+        <span class="mc-diff diff-${m.diff==='easy'?'easy':m.diff==='medium'?'mid':'hard'}">${m.diff.toUpperCase()}</span>
+        <span class="tut-badge" onclick="event.stopPropagation();showTutorial('${m.id}')">📖 HOW TO PLAY</span>
+      </div>
+      <div class="mc-body">
+        <span class="mc-icon">${m.icon}</span>
+        <div class="mc-text">
+          <div class="mc-title">${m.title}</div>
+          <div class="mc-desc">${m.desc}</div>
+          <div class="mc-skills">${m.skills.map(s=>`<span class="skill-tag">${s}</span>`).join('')}</div>
+        </div>
+      </div>
+      <div class="mc-xp">+${m.xpReward} XP${best?' · BEST: '+best+'%':''}</div>
+      <div class="mc-bar"><div class="mc-bar-fill" style="width:${best}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════
+// GAME ENGINE
+// ═══════════════════════════════════════════════
+let gameLoop=null;
+
+function startMission(id){
+  const m=MISSIONS.find(x=>x.id===id);if(!m)return;
+  STATE.currentMission=m;
+  document.getElementById('hudMission').textContent=m.title;
+  document.getElementById('skipBtn').classList.add('show');
+  document.getElementById('skipConfirm').classList.remove('show');
+  showScreen('gameScreen');
+  const canvas=document.getElementById('gameCanvas');canvas.width=canvas.offsetWidth;canvas.height=canvas.offsetHeight;
+  if(gameLoop)cancelAnimationFrame(gameLoop);
+  const overlay=document.getElementById('gameOverlay');overlay.innerHTML='';
+  let cd=3;const cdEl=document.createElement('div');cdEl.className='g-countdown';cdEl.textContent=cd;overlay.appendChild(cdEl);
+  const cdTimer=setInterval(()=>{cd--;if(cd<=0){clearInterval(cdTimer);cdEl.remove();GAMES[id](canvas,overlay);}else{cdEl.style.animation='none';cdEl.offsetHeight;cdEl.style.animation='countPop 0.4s cubic-bezier(0.34,1.56,0.64,1)';cdEl.textContent=cd;}},800);
+}
+
+function stopGame(){if(gameLoop)cancelAnimationFrame(gameLoop);gameLoop=null;document.getElementById('skipBtn').classList.remove('show');document.getElementById('skipConfirm').classList.remove('show');}
+
+function showResult(score,stats,feedbackKey){
+  stopGame();const m=STATE.currentMission;
+  const earned=Math.round((score/100)*m.xpReward);
+  STATE.xp+=earned;STATE.totalScore+=score;
+  STATE.sessionScores[m.id]=Math.max(STATE.sessionScores[m.id]||0,score);
+  updateHUD();
+  const rank=getRank(STATE.xp);
+  const badge=document.getElementById('resultRankBadge');
+  badge.textContent=rank.icon+' '+rank.name;badge.style.color=rank.color;badge.style.borderColor=rank.color;badge.style.background=rank.color+'15';
+  document.getElementById('resultScore').textContent=score+'%';
+  document.getElementById('statGrid').innerHTML=stats.map(s=>`<div class="stat-box"><div class="stat-val" style="color:${s.color||'var(--green)'}">${s.val}</div><div class="stat-name">${s.name}</div></div>`).join('')+`<div class="stat-box"><div class="stat-val" style="color:var(--gold)">+${earned}</div><div class="stat-name">XP EARNED</div></div>`;
+  const tip=m.tip[feedbackKey];
+  document.getElementById('feedbackTitle').textContent=feedbackKey==='great'?'💪 PRO LEVEL':feedbackKey==='ok'?'📈 IMPROVING':'🎯 KEEP TRAINING';
+  document.getElementById('feedbackTip').textContent=tip;
+  showScreen('resultScreen');
+}
+
+function retryMission(){startMission(STATE.currentMission.id);}
+function flashHit(overlay){const d=document.createElement('div');d.className='hit-flash';overlay.appendChild(d);setTimeout(()=>d.remove(),200);playHit();}
+function flashMiss(overlay){const d=document.createElement('div');d.className='miss-flash';overlay.appendChild(d);setTimeout(()=>d.remove(),250);playMiss();}
+
+// ═══════════════════════════════════════════════
+// TRIVIA DATA
+// ═══════════════════════════════════════════════
+const TRIVIA=[
+  {q:'What is the maximum number of players in a standard BGMI match?',opts:['50','64','100','120'],a:2},
+  {q:'Which weapon has the highest base damage in BGMI?',opts:['AWM','M249','M24','Mk14'],a:0},
+  {q:'How many inventory slots does a Level 3 Backpack provide?',opts:['180','200','250','300'],a:2},
+  {q:'What is the flight speed of a frag grenade thrown at full power?',opts:['30m/s','20m/s','15m/s','25m/s'],a:3},
+  {q:'Which zone type does the most damage per second at final circles?',opts:['Blue Zone','Red Zone','Both equal','Depends on circle'],a:0},
+  {q:'The SCAR-L uses which caliber ammunition?',opts:['7.62mm','5.56mm','9mm','.45 ACP'],a:1},
+  {q:'Which healing item restores HP the fastest?',opts:['First Aid Kit','Med Kit','Bandage','Energy Drink'],a:0},
+  {q:'Which map has the smallest playable area in BGMI?',opts:['Erangel','Miramar','Sanhok','Vikendi'],a:2},
+  {q:'The Kar98k uses which ammunition type?',opts:['7.62mm','5.56mm','12 Gauge','.300 Magnum'],a:0},
+  {q:'What attachment reduces muzzle flash?',opts:['Suppressor','Flash Hider','Compensator','Choke'],a:1},
+  {q:'Which grenade has the longest fuse timer?',opts:['Stun Grenade','Smoke Grenade','Frag Grenade','Molotov Cocktail'],a:2},
+  {q:'What is the blue zone damage in the final circle (typically)?',opts:['10 HP/s','25 HP/s','5 HP/s','50 HP/s'],a:1},
+  {q:'Which vehicle is the fastest in BGMI?',opts:['Buggy','Motorcycle','Dacia','UAZ'],a:1},
+  {q:'What does "thirsting" mean in BGMI?',opts:['Drinking energy drinks','Finishing a downed enemy','Zone rotation','Camping'],a:1},
+];
+
+// ═══════════════════════════════════════════════
+// ALL GAMES (unchanged from original)
+// ═══════════════════════════════════════════════
+const GAMES={
+
+aim(canvas,overlay){
+  const ctx=canvas.getContext('2d');const W=canvas.width,H=canvas.height;
+  let score=0,hits=0,misses=0,targets=[],spawnTimer=0,elapsed=0,lastTime=0;
+  const maxTargets=6,gameDuration=20000;let running=true;
+  const instr=document.createElement('div');instr.className='g-instruction';instr.textContent='CLICK THE TARGETS — BE FAST AND ACCURATE';overlay.appendChild(instr);setTimeout(()=>instr.remove(),2500);
+  function spawnTarget(){const r=16+Math.random()*20;targets.push({x:r+Math.random()*(W-r*2),y:r+70+Math.random()*(H-r*2-100),r,vx:(Math.random()-0.5)*3,vy:(Math.random()-0.5)*3,lifetime:1800+Math.random()*1200,age:0});}
+  function drawTarget(t){const pulse=Math.sin(t.age*0.005)*0.12;ctx.beginPath();ctx.arc(t.x,t.y,t.r*(1+pulse),0,Math.PI*2);ctx.fillStyle='rgba(255,59,59,0.12)';ctx.fill();ctx.beginPath();ctx.arc(t.x,t.y,t.r,0,Math.PI*2);ctx.strokeStyle='#FF3B3B';ctx.lineWidth=2;ctx.stroke();ctx.beginPath();ctx.arc(t.x,t.y,t.r*0.5,0,Math.PI*2);ctx.fillStyle='rgba(255,59,59,0.65)';ctx.fill();ctx.beginPath();ctx.arc(t.x,t.y,t.r*0.18,0,Math.PI*2);ctx.fillStyle='#FF3B3B';ctx.fill();const left=1-(t.age/t.lifetime);ctx.beginPath();ctx.arc(t.x,t.y,t.r+5,-Math.PI/2,-Math.PI/2+Math.PI*2*left);ctx.strokeStyle=`rgba(255,149,0,${left})`;ctx.lineWidth=3;ctx.stroke();}
+  function loop(ts){if(!running)return;const dt=ts-lastTime||16;lastTime=ts;elapsed+=dt;const timeLeft=Math.max(0,(gameDuration-elapsed)/1000);ctx.clearRect(0,0,W,H);ctx.strokeStyle='rgba(0,255,135,0.04)';ctx.lineWidth=1;for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}spawnTimer+=dt;if(spawnTimer>600&&targets.length<maxTargets){spawnTarget();spawnTimer=0;}targets=targets.filter(t=>{t.age+=dt;t.x+=t.vx;t.y+=t.vy;if(t.x<t.r){t.x=t.r;t.vx*=-1;}if(t.x>W-t.r){t.x=W-t.r;t.vx*=-1;}if(t.y<t.r+60){t.y=t.r+60;t.vy*=-1;}if(t.y>H-t.r){t.y=H-t.r;t.vy*=-1;}if(t.age>=t.lifetime){misses++;return false;}drawTarget(t);return true;});ctx.fillStyle='rgba(7,9,13,0.7)';ctx.fillRect(0,H-44,W,44);ctx.fillStyle=timeLeft<5?'#FF3B3B':'#00FF87';ctx.font='bold 22px Orbitron';ctx.textAlign='center';ctx.fillText(timeLeft.toFixed(1)+'s',W/2,H-16);ctx.fillStyle='#7A8A9A';ctx.font='11px Share Tech Mono';ctx.fillText(`HITS: ${hits}   MISSES: ${misses}   SCORE: ${score}`,W/2,H-34);if(elapsed>=gameDuration){endGame();return;}gameLoop=requestAnimationFrame(loop);}
+  function endGame(){running=false;const total=hits+misses||1;const acc=Math.round((hits/total)*100);const sc=Math.min(100,Math.round(acc*0.7+Math.min(30,hits*2)));showResult(sc,[{val:hits,name:'HIT'},{val:misses,name:'MISSED',color:'var(--red)'},{val:acc+'%',name:'ACCURACY'},{val:score,name:'POINTS'}],sc>=75?'great':sc>=45?'ok':'poor');}
+  canvas.onclick=e=>{const rect=canvas.getBoundingClientRect();const mx=(e.clientX-rect.left)*(W/rect.width);const my=(e.clientY-rect.top)*(H/rect.height);let hit=false;targets=targets.filter(t=>{if(Math.hypot(mx-t.x,my-t.y)<=t.r){hit=true;hits++;score+=10;return false;}return true;});if(hit){toast('HIT! +10','hit');flashHit(overlay);}else{misses++;score=Math.max(0,score-5);toast('MISS -5','miss');flashMiss(overlay);}};
+  canvas.addEventListener('touchstart',e=>{e.preventDefault();canvas.onclick(e.touches[0]);},{passive:false});
+  for(let i=0;i<3;i++)spawnTarget();gameLoop=requestAnimationFrame(ts=>{lastTime=ts;loop(ts);});
+},
+
+reflex(canvas,overlay){
+  const ctx=canvas.getContext('2d');const W=canvas.width,H=canvas.height;
+  let round=0,wins=0,losses=0,totalRT=0,waiting=true,enemyShowing=false,startT=0;const totalRounds=8;let timeoutId;
+  const instr=document.createElement('div');instr.className='g-instruction';instr.textContent='ENEMY APPEARS → CLICK IMMEDIATELY';overlay.appendChild(instr);setTimeout(()=>instr.remove(),2500);
+  function drawScene(state){ctx.clearRect(0,0,W,H);ctx.strokeStyle='rgba(0,255,135,0.04)';ctx.lineWidth=1;for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}ctx.fillStyle='rgba(0,255,135,0.06)';ctx.fillRect(0,H/2-1,W,2);ctx.fillStyle='rgba(0,255,135,0.08)';ctx.fillRect(W/2-60,H*0.65,120,80);ctx.fillStyle='#00FF87';ctx.font='bold 13px Rajdhani';ctx.textAlign='center';ctx.fillText('YOU',W/2,H*0.63);drawChar(ctx,W/2,H*0.72,'#00FF87',false);if(state==='waiting'){ctx.fillStyle='rgba(255,255,255,0.08)';ctx.fillRect(W/2-60,H*0.2,120,80);ctx.fillStyle='var(--dim,#7A8A9A)';ctx.font='14px Share Tech Mono';ctx.textAlign='center';ctx.fillText('...',W/2,H*0.35);}else if(state==='enemy'){drawChar(ctx,W/2,H*0.28,'#FF3B3B',true);ctx.fillStyle='#FF3B3B';ctx.font='bold 14px Rajdhani';ctx.textAlign='center';ctx.fillText('ENEMY!',W/2,H*0.15);ctx.beginPath();ctx.arc(W/2,H*0.28,42,0,Math.PI*2);ctx.strokeStyle='rgba(255,59,59,0.6)';ctx.lineWidth=3;ctx.stroke();}else if(state==='hit'){ctx.fillStyle='rgba(0,255,135,0.12)';ctx.fillRect(0,0,W,H/2);ctx.fillStyle='#00FF87';ctx.font='bold 36px Orbitron';ctx.textAlign='center';ctx.fillText('ELIMINATED!',W/2,H*0.32);}else if(state==='dead'){ctx.fillStyle='rgba(255,59,59,0.08)';ctx.fillRect(0,0,W,H/2);ctx.fillStyle='#FF3B3B';ctx.font='bold 32px Orbitron';ctx.textAlign='center';ctx.fillText('TOO SLOW!',W/2,H*0.32);}ctx.fillStyle='rgba(7,9,13,0.8)';ctx.fillRect(0,H-50,W,50);ctx.fillStyle='#00FF87';ctx.font='16px Orbitron';ctx.textAlign='left';ctx.fillText(`ROUND ${round}/${totalRounds}`,16,H-20);ctx.fillStyle='#00FF87';ctx.textAlign='center';ctx.fillText(`W: ${wins}`,W/2,H-20);ctx.fillStyle='#FF3B3B';ctx.textAlign='right';ctx.fillText(`L: ${losses}`,W-16,H-20);}
+  function drawChar(ctx,x,y,color,isEnemy){ctx.fillStyle=color;ctx.beginPath();ctx.arc(x,y-28,12,0,Math.PI*2);ctx.fill();ctx.fillRect(x-9,y-16,18,28);ctx.fillRect(x-9,y+12,7,18);ctx.fillRect(x+2,y+12,7,18);ctx.fillStyle=isEnemy?'rgba(255,59,59,0.8)':'rgba(0,255,135,0.8)';if(isEnemy)ctx.fillRect(x+10,y-4,18,5);else ctx.fillRect(x-28,y-4,18,5);}
+  function nextRound(){if(round>=totalRounds){endGame();return;}round++;waiting=true;enemyShowing=false;drawScene('waiting');timeoutId=setTimeout(showEnemy,1200+Math.random()*2500);}
+  function showEnemy(){enemyShowing=true;waiting=false;startT=performance.now();drawScene('enemy');timeoutId=setTimeout(()=>{losses++;toast('TOO SLOW!','miss',1200);drawScene('dead');setTimeout(nextRound,900);},800);}
+  drawScene('waiting');setTimeout(nextRound,1000);
+  function handleClick(){if(waiting){toast('WAIT FOR ENEMY!','miss');clearTimeout(timeoutId);timeoutId=setTimeout(showEnemy,1000+Math.random()*1500);return;}if(!enemyShowing)return;clearTimeout(timeoutId);const rt=performance.now()-startT;totalRT+=rt;wins++;const msg=rt<150?'INSANE! '+rt.toFixed(0)+'ms':rt<250?'FAST! '+rt.toFixed(0)+'ms':rt<400?'GOOD! '+rt.toFixed(0)+'ms':'Slow... '+rt.toFixed(0)+'ms';toast(msg,'hit',1000);flashHit(overlay);drawScene('hit');enemyShowing=false;setTimeout(nextRound,700);}
+  canvas.onclick=handleClick;canvas.addEventListener('touchstart',e=>{e.preventDefault();handleClick();},{passive:false});
+  function endGame(){const avgRT=wins?Math.round(totalRT/wins):999;const sc=Math.min(100,Math.round((wins/totalRounds)*60+Math.max(0,(500-avgRT)/5)));showResult(sc,[{val:wins+'/'+totalRounds,name:'DUELS WON'},{val:avgRT+'ms',name:'AVG REACTION',color:avgRT<250?'var(--green)':'var(--orange)'},{val:losses,name:'LOST',color:'var(--red)'}],sc>=70?'great':sc>=45?'ok':'poor');}
+},
+
+recoil(canvas,overlay){
+  const ctx=canvas.getContext('2d');const W=canvas.width,H=canvas.height;
+  const cx=W/2,cy=H/2;let dotY=cy;let holding=false,inZone=0,elapsed=0,lastT=0,shots=0;
+  let recoilVel=0,mouseStartY=0,dotStartY=0;const totalTime=15000;const zone={top:cy-28,bot:cy+28};
+  const instr=document.createElement('div');instr.className='g-instruction';instr.textContent='HOLD & DRAG DOWN — KEEP DOT IN GREEN ZONE';overlay.appendChild(instr);setTimeout(()=>instr.remove(),3000);
+  function draw(dt){ctx.clearRect(0,0,W,H);ctx.strokeStyle='rgba(0,255,135,0.04)';ctx.lineWidth=1;for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}const inZ=dotY>=zone.top&&dotY<=zone.bot;ctx.fillStyle=inZ?'rgba(0,255,135,0.1)':'rgba(255,59,59,0.05)';ctx.fillRect(cx-100,zone.top,200,zone.bot-zone.top);ctx.strokeStyle=inZ?'rgba(0,255,135,0.55)':'rgba(255,59,59,0.3)';ctx.lineWidth=2;ctx.strokeRect(cx-100,zone.top,200,zone.bot-zone.top);if(holding){recoilVel-=dt*0.18;dotY+=recoilVel;dotY=Math.max(80,Math.min(H-100,dotY));if(inZ)inZone+=dt;}else{dotY+=(cy-dotY)*0.06;recoilVel*=0.7;}const inZN=dotY>=zone.top&&dotY<=zone.bot;ctx.beginPath();ctx.arc(cx,dotY,10,0,Math.PI*2);ctx.fillStyle=inZN?'#00FF87':'#FF3B3B';ctx.fill();ctx.beginPath();ctx.arc(cx,dotY,4,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();const tLeft=(totalTime-elapsed)/1000;const tPct=(totalTime-elapsed)/totalTime;ctx.fillStyle='rgba(7,9,13,0.85)';ctx.fillRect(0,H-44,W,44);ctx.fillStyle=tLeft<5?'#FF3B3B':'#00FF87';ctx.font='bold 22px Orbitron';ctx.textAlign='center';ctx.fillText(tLeft.toFixed(1)+'s',W/2,H-14);ctx.fillStyle='rgba(0,255,135,0.2)';ctx.fillRect(0,H-48,W*tPct,4);}
+  function loop(ts){const dt=ts-(lastT||ts);lastT=ts;elapsed+=dt;if(elapsed>=totalTime){endGame();return;}draw(dt);gameLoop=requestAnimationFrame(loop);}
+  canvas.addEventListener('mousedown',e=>{holding=true;shots++;recoilVel=0;mouseStartY=e.clientY;dotStartY=dotY;});canvas.addEventListener('mouseup',()=>{holding=false;});canvas.addEventListener('mousemove',e=>{if(holding){const dy=(e.clientY-mouseStartY)*0.6;dotY=Math.max(80,Math.min(H-100,dotStartY+dy));}});canvas.addEventListener('touchstart',e=>{e.preventDefault();holding=true;shots++;recoilVel=0;mouseStartY=e.touches[0].clientY;dotStartY=dotY;},{passive:false});canvas.addEventListener('touchend',()=>{holding=false;});canvas.addEventListener('touchmove',e=>{e.preventDefault();if(holding){const dy=(e.touches[0].clientY-mouseStartY)*0.6;dotY=Math.max(80,Math.min(H-100,dotStartY+dy));}},{passive:false});
+  function endGame(){const controlPct=Math.round((inZone/totalTime)*100);const sc=Math.min(100,controlPct);showResult(sc,[{val:controlPct+'%',name:'ON TARGET'},{val:shots,name:'BURSTS FIRED'},{val:Math.round(inZone/1000)+'s',name:'CONTROLLED'}],sc>=65?'great':sc>=40?'ok':'poor');}
+  gameLoop=requestAnimationFrame(ts=>{lastT=ts;loop(ts);});
+},
+
+zone(canvas,overlay){
+  const ctx=canvas.getContext('2d');const W=canvas.width,H=canvas.height;
+  let hp=100,elapsed=0,lastT=0;const totalTime=25000;let player={x:W*0.15,y:H*0.8};let safeZone={x:W/2,y:H/2,r:Math.min(W,H)*0.42};let targetZone={x:W/2,y:H/2,r:Math.min(W,H)*0.18};let zonePhase=0,phaseElapsed=0;const phaseDur=8000;const zones=[{tx:W*0.55,ty:H*0.4,tr:Math.min(W,H)*0.14},{tx:W*0.3,ty:H*0.55,tr:Math.min(W,H)*0.11},{tx:W*0.65,ty:H*0.6,tr:Math.min(W,H)*0.09}];let moving=false,moveTarget={x:0,y:0};
+  const instr=document.createElement('div');instr.className='g-instruction';instr.textContent='TAP TO MOVE — STAY INSIDE THE WHITE CIRCLE!';overlay.appendChild(instr);setTimeout(()=>instr.remove(),2500);
+  function isInSafe(px,py){return Math.hypot(px-safeZone.x,py-safeZone.y)<safeZone.r-10;}
+  function loop(ts){const dt=ts-(lastT||ts);lastT=ts;elapsed+=dt;phaseElapsed+=dt;if(phaseElapsed>phaseDur&&zonePhase<zones.length){phaseElapsed=0;const nz=zones[zonePhase];targetZone={x:nz.tx,y:nz.ty,r:nz.tr};zonePhase++;}safeZone.x+=(targetZone.x-safeZone.x)*0.003;safeZone.y+=(targetZone.y-safeZone.y)*0.003;safeZone.r+=(targetZone.r-safeZone.r)*0.003;if(moving){const dx=moveTarget.x-player.x,dy=moveTarget.y-player.y;const dist=Math.hypot(dx,dy);if(dist<4)moving=false;else{const spd=Math.min(dist,5);player.x+=dx/dist*spd;player.y+=dy/dist*spd;}}const safe=isInSafe(player.x,player.y);if(!safe)hp=Math.max(0,hp-dt*0.025);else hp=Math.min(100,hp+dt*0.008);if(hp<=0){endGame(false);return;}if(elapsed>=totalTime){endGame(true);return;}ctx.clearRect(0,0,W,H);ctx.fillStyle='#07090D';ctx.fillRect(0,0,W,H);ctx.strokeStyle='rgba(255,255,255,0.03)';ctx.lineWidth=1;for(let x=0;x<W;x+=60){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}for(let y=0;y<H;y+=60){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}ctx.save();ctx.beginPath();ctx.rect(0,0,W,H);ctx.arc(safeZone.x,safeZone.y,safeZone.r,0,Math.PI*2,true);ctx.fillStyle='rgba(0,80,200,0.18)';ctx.fill();ctx.restore();const pulse=Math.sin(elapsed*0.004)*4;ctx.beginPath();ctx.arc(safeZone.x,safeZone.y,safeZone.r+pulse,0,Math.PI*2);ctx.strokeStyle=`rgba(0,100,255,${0.6+Math.sin(elapsed*0.005)*0.2})`;ctx.lineWidth=3+pulse*0.3;ctx.stroke();if(zonePhase<zones.length){const nz=zones[zonePhase];ctx.beginPath();ctx.arc(nz.tx,nz.ty,nz.tr,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,0.15)';ctx.lineWidth=2;ctx.setLineDash([6,6]);ctx.stroke();ctx.setLineDash([]);}if(moving){ctx.beginPath();ctx.arc(moveTarget.x,moveTarget.y,8,0,Math.PI*2);ctx.strokeStyle='rgba(0,255,135,0.5)';ctx.lineWidth=1;ctx.stroke();}const glow=safe?'rgba(0,255,135,0.35)':'rgba(255,59,59,0.45)';ctx.beginPath();ctx.arc(player.x,player.y,16,0,Math.PI*2);ctx.fillStyle=glow;ctx.fill();ctx.beginPath();ctx.arc(player.x,player.y,10,0,Math.PI*2);ctx.fillStyle=safe?'#00FF87':'#FF3B3B';ctx.fill();ctx.fillStyle='rgba(7,9,13,0.85)';ctx.fillRect(0,H-52,W,52);ctx.fillStyle='rgba(255,59,59,0.2)';ctx.fillRect(12,H-34,W-24,16);ctx.fillStyle=hp>50?'#00FF87':hp>25?'#FF9500':'#FF3B3B';ctx.fillRect(12,H-34,(W-24)*(hp/100),16);ctx.fillStyle='#fff';ctx.font='bold 11px Share Tech Mono';ctx.textAlign='left';ctx.fillText(`HP: ${Math.ceil(hp)}%`,16,H-15);const tLeft=((totalTime-elapsed)/1000).toFixed(1);ctx.textAlign='center';ctx.fillStyle=tLeft<5?'#FF3B3B':'#00FF87';ctx.font='bold 16px Orbitron';ctx.fillText(tLeft+'s',W/2,H-10);gameLoop=requestAnimationFrame(loop);}
+  canvas.addEventListener('click',e=>{const rect=canvas.getBoundingClientRect();moveTarget.x=(e.clientX-rect.left)*(W/rect.width);moveTarget.y=(e.clientY-rect.top)*(H/rect.height);moving=true;});canvas.addEventListener('touchstart',e=>{e.preventDefault();const rect=canvas.getBoundingClientRect();moveTarget.x=(e.touches[0].clientX-rect.left)*(W/rect.width);moveTarget.y=(e.touches[0].clientY-rect.top)*(H/rect.height);moving=true;},{passive:false});
+  function endGame(survived){const hpScore=Math.round(hp);const sc=Math.min(100,hpScore+(survived?30:0));showResult(sc,[{val:survived?'YES':'NO',name:'SURVIVED',color:survived?'var(--green)':'var(--red)'},{val:Math.ceil(hp)+'%',name:'HP REMAINING'},{val:(elapsed/1000).toFixed(1)+'s',name:'LASTED'}],sc>=70?'great':sc>=40?'ok':'poor');}
+  gameLoop=requestAnimationFrame(ts=>{lastT=ts;loop(ts);});
+},
+
+grenade(canvas,overlay){
+  const ctx=canvas.getContext('2d');const W=canvas.width,H=canvas.height;
+  let score=0,throws=0,hits=0,elapsed=0,lastT=0;const totalTime=30000;
+  let phase='aim',power=0,powerDir=1;let grenadeX=W*0.15,grenadeY=H*0.7;let gVx=0,gVy=0;let cookTimer=0,cookMax=3000,cookWarned=false;let particles=[];let targets=genTargets();
+  function genTargets(){return Array.from({length:3},(_,i)=>({x:W*0.4+Math.random()*W*0.45,y:H*0.3+i*(H*0.18),r:30+Math.random()*25,hit:false,age:0}));}
+  const instr=document.createElement('div');instr.className='g-instruction';instr.textContent='HOLD TO COOK (MAX 3s), RELEASE TO THROW';overlay.appendChild(instr);setTimeout(()=>instr.remove(),3500);
+  function draw(dt){ctx.clearRect(0,0,W,H);ctx.strokeStyle='rgba(0,255,135,0.04)';ctx.lineWidth=1;for(let x=0;x<W;x+=50){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}for(let y=0;y<H;y+=50){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}ctx.fillStyle='rgba(0,255,135,0.04)';ctx.fillRect(0,H*0.75,W,H*0.25);ctx.strokeStyle='rgba(0,255,135,0.2)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,H*0.75);ctx.lineTo(W,H*0.75);ctx.stroke();targets.forEach(t=>{if(t.hit){t.age+=dt;return;}ctx.beginPath();ctx.arc(t.x,t.y,t.r,0,Math.PI*2);ctx.fillStyle='rgba(255,59,59,0.12)';ctx.fill();ctx.strokeStyle='rgba(255,59,59,0.5)';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='rgba(255,59,59,0.6)';ctx.font='bold 11px Share Tech Mono';ctx.textAlign='center';ctx.fillText('BLAST ZONE',t.x,t.y+t.r+14);});if(phase==='cook'||phase==='aim'){power+=dt*0.0015*powerDir;if(power>=1||power<=0)powerDir*=-1;power=Math.max(0,Math.min(1,power));const barW=200,barH=16,bx=W/2-barW/2,by=H*0.75+20;ctx.fillStyle='rgba(7,9,13,0.7)';ctx.fillRect(bx-4,by-4,barW+8,barH+8);ctx.fillStyle='rgba(255,255,255,0.06)';ctx.fillRect(bx,by,barW,barH);const col=power>0.85?'#FF3B3B':power>0.5?'#FF9500':'#00FF87';ctx.fillStyle=col;ctx.fillRect(bx,by,barW*power,barH);ctx.strokeStyle='rgba(255,255,255,0.1)';ctx.lineWidth=1;ctx.strokeRect(bx,by,barW,barH);ctx.fillStyle='#fff';ctx.font='bold 11px Share Tech Mono';ctx.textAlign='center';ctx.fillText('THROW POWER',W/2,by-6);}if(phase==='cook'){const ct=cookTimer/cookMax;ctx.fillStyle='rgba(7,9,13,0.7)';ctx.fillRect(grenadeX-30,grenadeY-60,60,14);ctx.fillStyle=ct>0.7?'#FF3B3B':'#FF9500';ctx.fillRect(grenadeX-28,grenadeY-58,56*ct,10);if(ct>0.8&&!cookWarned){cookWarned=true;toast('⚠️ COOK TIMER CRITICAL!','miss');}}ctx.fillStyle='#00FF87';ctx.beginPath();ctx.arc(grenadeX,H*0.72,12,0,Math.PI*2);ctx.fill();ctx.fillRect(grenadeX-8,H*0.72,16,24);if(phase==='flying'){ctx.beginPath();ctx.arc(grenadeX,grenadeY,8,0,Math.PI*2);ctx.fillStyle='#FFD700';ctx.fill();}particles=particles.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.3;p.life-=dt;if(p.life<=0)return false;ctx.globalAlpha=p.life/500;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=p.color;ctx.fill();ctx.globalAlpha=1;return true;});const tLeft=(totalTime-elapsed)/1000;ctx.fillStyle='rgba(7,9,13,0.85)';ctx.fillRect(0,H-44,W,44);ctx.fillStyle=tLeft<5?'#FF3B3B':'#00FF87';ctx.font='bold 22px Orbitron';ctx.textAlign='center';ctx.fillText(tLeft.toFixed(1)+'s',W/2,H-14);ctx.fillStyle='#7A8A9A';ctx.font='11px Share Tech Mono';ctx.textAlign='left';ctx.fillText(`SCORE: ${score}   HITS: ${hits}/${throws}`,16,H-30);}
+  function launch(){if(phase!=='cook'&&phase!=='aim')return;throws++;cookTimer=0;cookWarned=false;const angle=-(Math.PI*0.35+power*0.3);const speed=8+power*12;gVx=Math.cos(angle)*speed;gVy=Math.sin(angle)*speed;grenadeX=W*0.15;grenadeY=H*0.72;phase='flying';}
+  function updateFlight(dt){if(phase!=='flying')return;gVy+=0.25;grenadeX+=gVx;grenadeY+=gVy;if(grenadeY>=H*0.75){explode(grenadeX,grenadeY);return;}if(grenadeX>W||grenadeY>H){explode(grenadeX,H*0.74);return;}}
+  function explode(x,y){const blastR=60+power*40;for(let i=0;i<30;i++){const a=Math.random()*Math.PI*2;const spd=2+Math.random()*8;particles.push({x,y,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd-3,r:2+Math.random()*5,life:400+Math.random()*400,color:Math.random()>0.5?'#FF9500':'#FFD700'});}let hitAny=false;targets.forEach(t=>{if(!t.hit&&Math.hypot(x-t.x,y-t.y)<blastR+t.r){t.hit=true;hits++;hitAny=true;score+=50;toast('💥 DIRECT HIT +50','hit',1000);flashHit(overlay);}});if(!hitAny){score=Math.max(0,score-10);toast('MISS -10','miss',800);flashMiss(overlay);}phase='aim';grenadeX=W*0.15;grenadeY=H*0.72;power=0;if(targets.every(t=>t.hit)){setTimeout(()=>{targets=genTargets();},500);}}
+  function loop(ts){const dt=ts-(lastT||ts);lastT=ts;elapsed+=dt;if(elapsed>=totalTime){endGame();return;}if(phase==='cook'){cookTimer+=dt;if(cookTimer>=cookMax){toast('💥 COOKED TOO LONG!','miss');explode(grenadeX,H*0.72);}}updateFlight(dt);draw(dt);gameLoop=requestAnimationFrame(loop);}
+  canvas.addEventListener('mousedown',()=>{if(phase==='aim'){phase='cook';cookTimer=0;cookWarned=false;}});canvas.addEventListener('mouseup',()=>{if(phase==='cook')launch();});canvas.addEventListener('touchstart',e=>{e.preventDefault();if(phase==='aim'){phase='cook';cookTimer=0;cookWarned=false;}},{passive:false});canvas.addEventListener('touchend',e=>{e.preventDefault();if(phase==='cook')launch();},{passive:false});
+  function endGame(){const acc=throws?Math.round((hits/throws)*100):0;const sc=Math.min(100,Math.round(acc*0.7+Math.min(30,hits*5)));showResult(sc,[{val:hits,name:'DIRECT HITS'},{val:throws,name:'THROWN'},{val:acc+'%',name:'ACCURACY'},{val:score,name:'SCORE'}],sc>=60?'great':sc>=35?'ok':'poor');}
+  gameLoop=requestAnimationFrame(ts=>{lastT=ts;loop(ts);});
+},
+
+dropzone(canvas,overlay){
+  const ctx=canvas.getContext('2d');const W=canvas.width,H=canvas.height;
+  let score=0,combo=0,maxCombo=0,elapsed=0,lastT=0;const totalTime=20000;
+  let playerX=W/2,playerY=-30,velX=0,velY=2;let landed=false,landTimer=0;
+  const targets=Array.from({length:5},(_,i)=>({x:100+Math.random()*(W-200),y:H*0.3+i*(H*0.14),r:35+Math.random()*25,pts:50*(5-i)+Math.round(Math.random()*50),hit:false}));
+  let driftLeft=false,driftRight=false;
+  const instr=document.createElement('div');instr.className='g-instruction';instr.textContent='← → TO STEER • LAND IN HIGHLIGHTED ZONES!';overlay.appendChild(instr);setTimeout(()=>instr.remove(),2500);
+  function drawPlane(){ctx.font='24px sans-serif';ctx.textAlign='center';ctx.fillText('✈️',playerX,playerY);}
+  function loop(ts){const dt=ts-(lastT||ts);lastT=ts;elapsed+=dt;if(elapsed>=totalTime&&!landed){endGame();return;}if(!landed){if(driftLeft)velX=Math.max(velX-0.3,-5);else if(driftRight)velX=Math.min(velX+0.3,5);else velX*=0.92;playerX=Math.max(20,Math.min(W-20,playerX+velX));playerY+=velY;targets.forEach(t=>{if(!t.hit&&Math.hypot(playerX-t.x,playerY-t.y)<t.r+10){t.hit=true;combo++;maxCombo=Math.max(maxCombo,combo);const pts=t.pts*(combo>1?combo:1);score+=pts;toast(`LANDED! +${pts}${combo>1?' x'+combo+' COMBO!':''}`,combo>2?'gold':'hit',1200);flashHit(overlay);}});if(playerY>=H-60){landed=true;}}else{landTimer+=dt;if(landTimer>2000){endGame();}}ctx.clearRect(0,0,W,H);const sky=ctx.createLinearGradient(0,0,0,H);sky.addColorStop(0,'#050D1A');sky.addColorStop(1,'#0D1622');ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);targets.forEach(t=>{if(t.hit)return;ctx.beginPath();ctx.arc(t.x,t.y,t.r,0,Math.PI*2);ctx.fillStyle='rgba(0,255,135,0.08)';ctx.fill();ctx.strokeStyle='rgba(0,255,135,0.5)';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='rgba(0,255,135,0.7)';ctx.font='bold 12px Orbitron';ctx.textAlign='center';ctx.fillText('+'+t.pts,t.x,t.y);});ctx.fillStyle='rgba(0,255,135,0.06)';ctx.fillRect(0,H-60,W,60);ctx.strokeStyle='rgba(0,255,135,0.2)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,H-60);ctx.lineTo(W,H-60);ctx.stroke();if(!landed)drawPlane();else{ctx.font='36px sans-serif';ctx.textAlign='center';ctx.fillText('🤸',playerX,H-55);}const tLeft=(totalTime-elapsed)/1000;ctx.fillStyle='rgba(7,9,13,0.85)';ctx.fillRect(0,H-44,W,44);ctx.fillStyle=tLeft<5?'#FF3B3B':'#00FF87';ctx.font='bold 22px Orbitron';ctx.textAlign='center';ctx.fillText(landed?'LANDED!':tLeft.toFixed(1)+'s',W/2,H-14);ctx.fillStyle='#7A8A9A';ctx.font='11px Share Tech Mono';ctx.textAlign='left';ctx.fillText(`SCORE: ${score}   COMBO: x${combo}`,16,H-30);gameLoop=requestAnimationFrame(loop);}
+  document.addEventListener('keydown',e=>{if(e.key==='ArrowLeft')driftLeft=true;if(e.key==='ArrowRight')driftRight=true;});document.addEventListener('keyup',e=>{if(e.key==='ArrowLeft')driftLeft=false;if(e.key==='ArrowRight')driftRight=false;});canvas.addEventListener('touchmove',e=>{e.preventDefault();const rect=canvas.getBoundingClientRect();const tx=(e.touches[0].clientX-rect.left)*(W/rect.width);velX=(tx-playerX)*0.15;},{passive:false});canvas.addEventListener('mousemove',e=>{const rect=canvas.getBoundingClientRect();const mx=(e.clientX-rect.left)*(W/rect.width);velX=(mx-playerX)*0.08;});
+  function endGame(){const zHit=targets.filter(t=>t.hit).length;const sc=Math.min(100,Math.round(zHit/targets.length*70+Math.min(30,maxCombo*8)));showResult(sc,[{val:zHit+'/'+targets.length,name:'ZONES HIT'},{val:score,name:'SCORE'},{val:'x'+maxCombo,name:'MAX COMBO',color:'var(--gold)'}],sc>=60?'great':sc>=35?'ok':'poor');}
+  gameLoop=requestAnimationFrame(ts=>{lastT=ts;loop(ts);});
+},
+
+trivia(canvas,overlay){
+  const ctx=canvas.getContext('2d');const W=canvas.width,H=canvas.height;
+  overlay.style.pointerEvents='all';let score=0,q=0,correct=0,wrong=0;const totalQ=8;let questionStart=0;
+  const shuffled=[...TRIVIA].sort(()=>Math.random()-0.5).slice(0,totalQ);
+  ctx.fillStyle='#07090D';ctx.fillRect(0,0,W,H);ctx.strokeStyle='rgba(0,255,135,0.04)';ctx.lineWidth=1;for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}ctx.fillStyle='var(--green,#00FF87)';ctx.font='bold 28px Orbitron';ctx.textAlign='center';ctx.fillText('PEACEKEEPER QUIZ',W/2,50);ctx.fillStyle='var(--dim,#7A8A9A)';ctx.font='13px Share Tech Mono';ctx.fillText('ANSWER FAST FOR BONUS POINTS',W/2,72);
+  function showQuestion(){if(q>=totalQ){endGame();return;}const trivia=shuffled[q];questionStart=performance.now();overlay.innerHTML=`<div style="position:absolute;top:90px;left:50%;transform:translateX(-50%);width:min(580px,94%);display:flex;flex-direction:column;gap:8px"><div style="background:rgba(15,25,35,0.95);border:1px solid rgba(0,255,135,0.15);border-radius:10px;padding:16px 20px"><div style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:3px;color:#7A8A9A;margin-bottom:8px">Q ${q+1}/${totalQ} — ${correct} correct — ${wrong} wrong</div><div style="font-size:15px;font-weight:600;line-height:1.5;color:#E8EDF5;margin-bottom:14px">${trivia.q}</div>${trivia.opts.map((opt,i)=>`<button onclick="window.pickAnswer(${i})" style="display:block;width:100%;background:rgba(26,37,53,0.8);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:11px 14px;cursor:pointer;font-size:13px;font-family:'Rajdhani',sans-serif;color:#E8EDF5;text-align:left;margin-bottom:7px" onmouseover="this.style.borderColor='rgba(0,255,135,0.3)';this.style.background='rgba(0,255,135,0.05)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.06)';this.style.background='rgba(26,37,53,0.8)'">${String.fromCharCode(65+i)}. ${opt}</button>`).join('')}</div></div>`;
+  window.pickAnswer=function(idx){const rt=(performance.now()-questionStart)/1000;const buttons=overlay.querySelectorAll('button');buttons.forEach((b,i)=>{b.style.pointerEvents='none';if(i===trivia.a){b.style.borderColor='#00FF87';b.style.background='rgba(0,255,135,0.1)';b.style.color='#00FF87';}else if(i===idx&&i!==trivia.a){b.style.borderColor='#FF3B3B';b.style.background='rgba(255,59,59,0.1)';b.style.color='#FF3B3B';}});if(idx===trivia.a){correct++;const bonus=Math.max(0,Math.round((5-rt)*10));score+=100+bonus;toast(`✓ CORRECT +${100+bonus}`,bonus>20?'gold':'hit',1200);flashHit(overlay);}else{wrong++;score=Math.max(0,score-30);toast('✗ WRONG -30','miss',1000);flashMiss(overlay);}q++;setTimeout(showQuestion,1200);};}
+  showQuestion();function endGame(){overlay.innerHTML='';const acc=Math.round((correct/totalQ)*100);const sc=Math.min(100,Math.round(acc*0.7+Math.min(30,correct*3)));showResult(sc,[{val:correct+'/'+totalQ,name:'CORRECT'},{val:wrong,name:'WRONG',color:'var(--red)'},{val:acc+'%',name:'ACCURACY'},{val:score,name:'POINTS'}],sc>=70?'great':sc>=45?'ok':'poor');}
+},
+
+loot(canvas,overlay){
+  const ctx=canvas.getContext('2d');const W=canvas.width,H=canvas.height;
+  const items=[{name:'Level 3 Helmet',icon:'🪖',priority:1,pts:100,color:'#FFD700'},{name:'Level 3 Vest',icon:'🦺',priority:2,pts:80,color:'#FFD700'},{name:'Medkit',icon:'💊',priority:3,pts:60,color:'#FF3B3B'},{name:'4x Scope',icon:'🔭',priority:4,pts:50,color:'#00B4FF'},{name:'Ammo 5.56',icon:'🔴',priority:5,pts:40,color:'#FF9500'},{name:'Energy Drink',icon:'🥤',priority:6,pts:30,color:'#00FF87'},{name:'Level 2 Vest',icon:'🧥',priority:7,pts:20,color:'#888'},{name:'Bandage',icon:'🩹',priority:8,pts:10,color:'#888'}];
+  let round=1,score=0,timeLeft=30,lastT=0,floor=[],nextExpected=1,errors=0,pickups=0,roundActive=false,waitingNext=false;
+  const instr=document.createElement('div');instr.className='g-instruction';instr.textContent='CLICK LOOT IN PRIORITY ORDER: HELMET → VEST → MEDS...';overlay.appendChild(instr);setTimeout(()=>instr.remove(),3500);
+  function spawnFloor(){floor=[];const shuffled=[...items].sort(()=>Math.random()-0.5);const cols=4;shuffled.forEach((item,i)=>{const col=i%cols,row=Math.floor(i/cols);floor.push({...item,x:W*0.12+col*(W*0.22),y:H*0.22+row*(H*0.28),w:W*0.18,h:H*0.22,picked:false});});nextExpected=1;roundActive=true;}
+  function draw(){ctx.clearRect(0,0,W,H);ctx.fillStyle='#07090D';ctx.fillRect(0,0,W,H);ctx.strokeStyle='rgba(0,255,135,0.04)';ctx.lineWidth=1;for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}ctx.fillStyle='rgba(255,255,255,0.25)';ctx.font='bold 11px Share Tech Mono';ctx.textAlign='center';ctx.fillText(`ROUND ${round}/5 — PICK IN PRIORITY ORDER`,W/2,H*0.12);floor.forEach(item=>{if(item.picked)return;const isNext=item.priority===nextExpected;ctx.fillStyle=isNext?'rgba(0,255,135,0.1)':'rgba(255,255,255,0.03)';ctx.beginPath();ctx.rect(item.x-item.w/2,item.y-item.h/2,item.w,item.h);ctx.fill();ctx.strokeStyle=isNext?'rgba(0,255,135,0.6)':'rgba(255,255,255,0.07)';ctx.lineWidth=isNext?2:1;ctx.stroke();ctx.font='28px sans-serif';ctx.textAlign='center';ctx.fillText(item.icon,item.x,item.y-2);ctx.fillStyle=item.priority<=2?item.color:'rgba(255,255,255,0.55)';ctx.font=`bold ${item.priority<=2?12:10}px Rajdhani`;ctx.fillText(item.name,item.x,item.y+20);ctx.fillStyle='rgba(255,255,255,0.25)';ctx.font='10px Share Tech Mono';ctx.fillText('#'+item.priority,item.x,item.y+32);if(isNext){ctx.fillStyle='rgba(0,255,135,0.8)';ctx.font='bold 10px Share Tech Mono';ctx.fillText('▼ NEXT',item.x,item.y-item.h/2-5);}});ctx.fillStyle='rgba(7,9,13,0.88)';ctx.fillRect(0,H-52,W,52);ctx.fillStyle=timeLeft<8?'#FF3B3B':'#00FF87';ctx.font='bold 22px Orbitron';ctx.textAlign='center';ctx.fillText(timeLeft.toFixed(1)+'s',W/2,H-14);ctx.fillStyle='#7A8A9A';ctx.font='11px Share Tech Mono';ctx.textAlign='left';ctx.fillText(`SCORE: ${score}  PICKS: ${pickups}  ERRORS: ${errors}`,16,H-32);}
+  function loop(ts){const dt=ts-(lastT||ts);lastT=ts;if(roundActive)timeLeft=Math.max(0,timeLeft-dt/1000);if(timeLeft<=0){endGame();return;}draw();gameLoop=requestAnimationFrame(loop);}
+  function handleClick(mx,my){if(!roundActive||waitingNext)return;let clicked=null;floor.forEach(item=>{if(!item.picked&&mx>=item.x-item.w/2&&mx<=item.x+item.w/2&&my>=item.y-item.h/2&&my<=item.y+item.h/2)clicked=item;});if(!clicked)return;if(clicked.priority===nextExpected){clicked.picked=true;score+=clicked.pts;pickups++;nextExpected++;toast('+'+clicked.pts+' '+clicked.name,'hit',900);flashHit(overlay);if(floor.every(i=>i.picked)){roundActive=false;waitingNext=true;toast('ROUND CLEAR! 🎉','gold',1200);setTimeout(()=>{if(round>=5){endGame();return;}round++;timeLeft=Math.max(8,timeLeft+6);waitingNext=false;spawnFloor();},1200);}}else{errors++;toast('WRONG ORDER! -20pts','miss',900);flashMiss(overlay);score=Math.max(0,score-20);}}
+  canvas.addEventListener('click',e=>{const rect=canvas.getBoundingClientRect();handleClick((e.clientX-rect.left)*(W/rect.width),(e.clientY-rect.top)*(H/rect.height));});canvas.addEventListener('touchstart',e=>{e.preventDefault();const rect=canvas.getBoundingClientRect();handleClick((e.touches[0].clientX-rect.left)*(W/rect.width),(e.touches[0].clientY-rect.top)*(H/rect.height));},{passive:false});
+  function endGame(){const acc=pickups+errors?Math.round((pickups/(pickups+errors))*100):0;const sc=Math.min(100,Math.round(acc*0.5+Math.min(50,pickups*3)));showResult(sc,[{val:score,name:'POINTS'},{val:pickups,name:'CORRECT'},{val:errors,name:'MISTAKES',color:'var(--red)'},{val:acc+'%',name:'ACCURACY'}],sc>=70?'great':sc>=45?'ok':'poor');}
+  round=1;spawnFloor();gameLoop=requestAnimationFrame(ts=>{lastT=ts;loop(ts);});
+},
+
+snipe(canvas,overlay){
+  const ctx=canvas.getContext('2d');const W=canvas.width,H=canvas.height;
+  let hits=0,score=0,multiplier=1;const maxShots=10;let shotsFired=0;let swayTime=0,targets=[],lastT=0;
+  const instr=document.createElement('div');instr.className='g-instruction';instr.textContent='CLICK TO SNIPE — LEAD MOVING TARGETS';overlay.appendChild(instr);setTimeout(()=>instr.remove(),3000);
+  function spawnTarget(){const fromLeft=Math.random()>0.5;const y=H*0.15+Math.random()*H*0.55;const speed=(1.5+Math.random()*2)*(fromLeft?1:-1);const r=14+Math.random()*12;targets.push({x:fromLeft?-r:W+r,y,vx:speed,r,alive:true,age:0,points:Math.round(100/r*12)});}
+  let heartPhase=0;function getSwayOffset(){const bpm=70;const beatDur=60000/bpm;heartPhase=(heartPhase+1/60)%(beatDur/16.67);const beat=Math.pow(Math.sin(heartPhase*Math.PI),8);return{x:Math.sin(swayTime*0.8)*6+beat*4,y:Math.cos(swayTime*0.5)*4+beat*3};}
+  function draw(dt){ctx.clearRect(0,0,W,H);swayTime+=dt*0.001;const sway=getSwayOffset();const grad=ctx.createLinearGradient(0,0,0,H);grad.addColorStop(0,'#050A14');grad.addColorStop(1,'#0A1520');ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);for(let d=1;d<=5;d++){const y=H*0.1+d*(H*0.16);ctx.strokeStyle='rgba(255,255,255,0.04)';ctx.lineWidth=1;ctx.setLineDash([4,8]);ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='rgba(255,255,255,0.15)';ctx.font='10px Share Tech Mono';ctx.textAlign='left';ctx.fillText(d*100+'m',6,y-4);}targets=targets.filter(t=>{if(!t.alive)return false;t.x+=t.vx;t.age+=dt;if(t.x<-t.r-20||t.x>W+t.r+20)return false;ctx.fillStyle='rgba(30,40,60,0.9)';ctx.beginPath();ctx.ellipse(t.x,t.y,t.r*0.55,t.r*0.85,0,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(t.x,t.y-t.r*0.75,t.r*0.45,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(t.x,t.y-t.r*0.75,t.r*0.45,0,Math.PI*2);ctx.strokeStyle='rgba(255,59,59,0.4)';ctx.lineWidth=1.5;ctx.stroke();ctx.fillStyle='rgba(255,59,59,0.6)';ctx.font='bold 10px Share Tech Mono';ctx.textAlign='center';ctx.fillText(t.points+'pts',t.x,t.y+t.r+12);return true;});const scx=W/2+sway.x,scy=H/2+sway.y;const vign=ctx.createRadialGradient(scx,scy,W*0.18,scx,scy,W*0.6);vign.addColorStop(0,'transparent');vign.addColorStop(1,'rgba(0,0,0,0.96)');ctx.fillStyle=vign;ctx.fillRect(0,0,W,H);ctx.beginPath();ctx.arc(scx,scy,W*0.18,0,Math.PI*2);ctx.strokeStyle='rgba(0,255,135,0.5)';ctx.lineWidth=2;ctx.stroke();ctx.strokeStyle='rgba(0,255,135,0.7)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(scx-W*0.2,scy);ctx.lineTo(scx-8,scy);ctx.moveTo(scx+8,scy);ctx.lineTo(scx+W*0.2,scy);ctx.stroke();ctx.beginPath();ctx.moveTo(scx,scy-H*0.4);ctx.lineTo(scx,scy-8);ctx.moveTo(scx,scy+8);ctx.lineTo(scx,scy+H*0.4);ctx.stroke();ctx.beginPath();ctx.arc(scx,scy,2,0,Math.PI*2);ctx.fillStyle='rgba(255,59,59,0.9)';ctx.fill();ctx.fillStyle='rgba(7,9,13,0.88)';ctx.fillRect(0,H-52,W,52);ctx.fillStyle='#FFD60A';ctx.font='bold 20px Orbitron';ctx.textAlign='center';ctx.fillText(`${maxShots-shotsFired} SHOTS LEFT`,W/2,H-14);ctx.fillStyle='#7A8A9A';ctx.font='11px Share Tech Mono';ctx.textAlign='left';ctx.fillText(`HITS: ${hits}   SCORE: ${score}   x${multiplier} MULTI`,16,H-32);}
+  function loop(ts){const dt=ts-(lastT||ts);lastT=ts;if(Math.random()<0.02)spawnTarget();draw(dt);if(shotsFired>=maxShots&&targets.length===0){endGame();return;}gameLoop=requestAnimationFrame(loop);}
+  canvas.addEventListener('click',e=>{if(shotsFired>=maxShots)return;shotsFired++;const sway=getSwayOffset();const scx=W/2+sway.x,scy=H/2+sway.y;let hit=false;targets=targets.filter(t=>{const hd=Math.hypot(scx-t.x,scy-(t.y-t.r*0.75));if(hd<=t.r*0.6+10){hit=true;hits++;multiplier=Math.min(5,multiplier+1);const pts=t.points*multiplier;score+=pts;toast(`HEADSHOT! +${pts} (x${multiplier})✨`,'hit',1000);flashHit(overlay);return false;}const bd=Math.hypot(scx-t.x,scy-t.y);if(bd<=t.r*0.6){hit=true;hits++;multiplier=Math.min(4,multiplier+1);const pts=Math.round(t.points*0.6*multiplier);score+=pts;toast(`BODY +${pts} (x${multiplier})`,'hit',800);flashHit(overlay);return false;}return true;});if(!hit){multiplier=1;toast('MISSED! Multiplier reset','miss',800);flashMiss(overlay);}if(shotsFired>=maxShots)setTimeout(endGame,1500);});
+  canvas.addEventListener('touchstart',e=>{e.preventDefault();canvas.dispatchEvent(new MouseEvent('click',{clientX:e.touches[0].clientX,clientY:e.touches[0].clientY}));},{passive:false});
+  function endGame(){const acc=shotsFired?Math.round((hits/shotsFired)*100):0;const sc=Math.min(100,Math.round(acc*0.6+Math.min(40,score/50)));showResult(sc,[{val:hits+'/'+shotsFired,name:'HITS'},{val:acc+'%',name:'ACCURACY',color:acc>=60?'var(--green)':'var(--orange)'},{val:score,name:'SCORE'},{val:'x'+multiplier,name:'MULTI',color:'var(--gold)'}],sc>=65?'great':sc>=40?'ok':'poor');}
+  for(let i=0;i<3;i++)spawnTarget();gameLoop=requestAnimationFrame(ts=>{lastT=ts;loop(ts);});
+},
+};
+
+// ═══════════════════════════════════════════════
+// INTRO PARTICLES
+// ═══════════════════════════════════════════════
+(function(){
+  const c=document.getElementById('introCanvas');const ctx=c.getContext('2d');let W,H,particles=[];
+  function resize(){c.width=W=window.innerWidth;c.height=H=window.innerHeight;}
+  resize();window.addEventListener('resize',resize);
+  for(let i=0;i<80;i++)particles.push({x:Math.random()*1920,y:Math.random()*1080,vx:(Math.random()-0.5)*0.4,vy:(Math.random()-0.5)*0.4,r:Math.random()*2,opacity:Math.random()*0.5+0.1,color:Math.random()>0.7?'#00FF87':'#00B4FF'});
+  function loop(){ctx.clearRect(0,0,W,H);particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>W)p.vx*=-1;if(p.y<0||p.y>H)p.vy*=-1;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=p.color;ctx.globalAlpha=p.opacity;ctx.fill();ctx.globalAlpha=1;});particles.forEach((p,i)=>{particles.slice(i+1).forEach(p2=>{const d=Math.hypot(p.x-p2.x,p.y-p2.y);if(d<120){ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p2.x,p2.y);ctx.strokeStyle=`rgba(0,255,135,${0.06*(1-d/120)})`;ctx.lineWidth=0.5;ctx.stroke();}});});requestAnimationFrame(loop);}loop();
+})();
+
+// ═══════════════════════════════════════════════
+// AUDIO
+// ═══════════════════════════════════════════════
+let audioCtx=null;
+function ensureAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();}
+function beep(freq=440,dur=0.1,vol=0.12,type='sine'){ensureAudio();const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.connect(g);g.connect(audioCtx.destination);o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(vol,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+dur);o.start();o.stop(audioCtx.currentTime+dur);}
+function playHit(){beep(880,0.08,0.1,'square');setTimeout(()=>beep(1200,0.06,0.08,'sine'),50);}
+function playMiss(){beep(200,0.2,0.1,'sawtooth');}
+
+window.addEventListener('resize',()=>{const canvas=document.getElementById('gameCanvas');if(document.getElementById('gameScreen').classList.contains('active')){canvas.width=canvas.offsetWidth;canvas.height=canvas.offsetHeight;}});
+
+// ═══════════════════════════════════════════════
+// INIT — go straight to intro
+// ═══════════════════════════════════════════════
+showScreen('introScreen');
+</script>
+</body>
+</html>

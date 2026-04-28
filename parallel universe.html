@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Your Life in Parallel Universes</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#fff;--bg2:#f6f5f1;--bg3:#eceae4;--bg4:#e2e0d8;
+  --text:#111;--text2:#555;--text3:#999;
+  --bd:rgba(0,0,0,.1);--bd2:rgba(0,0,0,.18);
+  --r:10px;--rl:16px;
+  --safe:#1D9E75;--safe-l:#E1F5EE;--safe-d:#0F6E56;
+  --risk:#EF9F27;--risk-l:#FAEEDA;--risk-d:#854F0B;
+  --passion:#D4537E;--passion-l:#FBEAF0;--passion-d:#72243E;
+  --accent:#534AB7;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#141414;--bg2:#1e1e1e;--bg3:#282828;--bg4:#323232;
+    --text:#f0f0f0;--text2:#aaa;--text3:#555;
+    --bd:rgba(255,255,255,.08);--bd2:rgba(255,255,255,.15);
+    --safe-l:#0b2e22;--safe-d:#5DCAA5;
+    --risk-l:#2d1e00;--risk-d:#EF9F27;
+    --passion-l:#2d0e1e;--passion-d:#ED93B1;
+  }
+}
+html{scroll-behavior:smooth}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* ── PARTICLES ── */
+#particles{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.particle{position:absolute;border-radius:50%;opacity:.18;animation:float linear infinite}
+@keyframes float{0%{transform:translateY(100vh) scale(0)}100%{transform:translateY(-10vh) scale(1)}}
+
+/* ── LAYOUT ── */
+.app{max-width:500px;margin:0 auto;position:relative;z-index:1;padding-bottom:3rem}
+
+/* FIX 1: All screens hidden by default via JS-controlled class.
+   The original CSS had #hook{display:flex} which overrode .screen{display:none}.
+   We now use a single .screen-active class toggled by JS and rely only on that. */
+.screen{display:none}
+.screen.active{display:block;animation:fadeUp .45s ease both}
+
+/* FIX 2: Hook screen needs flex layout when active */
+#hook.active{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:3rem 2rem;min-height:100vh}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+
+/* ── TOPBAR ── */
+.topbar{display:flex;align-items:center;padding:1rem 1.5rem .5rem;gap:10px;min-height:52px}
+.back-btn{background:none;border:none;cursor:pointer;font-size:22px;color:var(--text2);padding:4px 8px;border-radius:var(--r);transition:background .15s}
+.back-btn:hover{background:var(--bg3)}
+.topbar-title{font-size:13px;color:var(--text3);letter-spacing:.04em}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;border-radius:var(--r);padding:13px 28px;font-size:15px;font-weight:600;cursor:pointer;transition:opacity .15s,transform .1s;width:100%}
+.btn:active{transform:scale(.98)}
+.btn-dark{background:var(--text);color:var(--bg)}
+.btn-dark:hover{opacity:.85}
+.btn-outline{background:none;border:0.5px solid var(--bd2);color:var(--text2);font-size:13px;padding:10px 18px}
+.btn-outline:hover{background:var(--bg3)}
+
+/* ── HOOK ── */
+.hook-tag{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--text3);margin-bottom:1.2rem}
+.orbs{display:flex;gap:14px;justify-content:center;margin-bottom:2rem}
+.orb{width:14px;height:14px;border-radius:50%;animation:orb-pulse 2.4s ease-in-out infinite}
+.orb.s{background:var(--safe);animation-delay:0s}
+.orb.r{background:var(--risk);animation-delay:.4s}
+.orb.p{background:var(--passion);animation-delay:.8s}
+@keyframes orb-pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:.6}}
+.hook-h1{font-size:32px;font-weight:700;line-height:1.25;max-width:360px;margin-bottom:.8rem}
+.hook-sub{font-size:15px;color:var(--text2);margin-bottom:2rem;max-width:300px;line-height:1.65}
+.hook-features{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:2.5rem;width:100%}
+.hf-card{background:var(--bg2);border:0.5px solid var(--bd);border-radius:var(--rl);padding:16px 10px;text-align:center}
+.hf-icon{font-size:22px;margin-bottom:6px}
+.hf-label{font-size:11px;color:var(--text2);font-weight:600}
+.hook-cta-wrap{width:100%;max-width:300px}
+.hook-meta{font-size:12px;color:var(--text3);margin-top:1rem}
+
+/* ── NAME INPUT ── */
+.ns-title{font-size:24px;font-weight:700;margin-bottom:.4rem}
+.ns-sub{font-size:14px;color:var(--text2);margin-bottom:2rem;line-height:1.6}
+.name-input{width:100%;border:1.5px solid var(--bd2);border-radius:var(--r);padding:14px 16px;font-size:16px;background:var(--bg);color:var(--text);margin-bottom:1rem;outline:none;transition:border-color .2s}
+.name-input:focus{border-color:var(--accent)}
+.name-hint{font-size:12px;color:var(--text3);margin-bottom:1.5rem}
+.avatar-row{display:flex;gap:10px;margin-bottom:1.5rem;flex-wrap:wrap}
+.avatar-opt{width:44px;height:44px;border-radius:50%;border:2px solid var(--bd2);cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;transition:all .2s;background:var(--bg2)}
+.avatar-opt.selected{border-color:var(--accent);background:var(--bg3);transform:scale(1.1)}
+
+/* ── QUIZ ── */
+.q-progress-wrap{margin-bottom:1.5rem}
+.q-progress-bar{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-bottom:.5rem}
+.q-progress-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .4s ease}
+.q-progress-label{font-size:12px;color:var(--text3);display:flex;justify-content:space-between}
+.q-eyebrow{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:.5rem}
+.q-text{font-size:21px;font-weight:700;line-height:1.3;margin-bottom:.4rem}
+.q-hint{font-size:13px;color:var(--text3);margin-bottom:1.8rem}
+.options{display:flex;flex-direction:column;gap:10px}
+.opt{background:var(--bg);border:0.5px solid var(--bd2);border-radius:var(--rl);padding:16px;cursor:pointer;display:flex;align-items:center;gap:14px;transition:all .2s;text-align:left;width:100%}
+.opt:hover{background:var(--bg2);border-color:var(--bd2)}
+.opt.sel{border:2px solid var(--accent);background:var(--bg2)}
+.opt-icon{font-size:22px;width:34px;text-align:center;flex-shrink:0}
+.opt-label{font-size:15px;font-weight:600;color:var(--text)}
+.opt-desc{font-size:12px;color:var(--text2);margin-top:2px}
+.q-nav{display:flex;justify-content:space-between;align-items:center;margin-top:1.8rem}
+.btn-next-q{background:var(--text);color:var(--bg);border:none;border-radius:var(--r);padding:12px 24px;font-size:14px;font-weight:600;cursor:pointer;opacity:.35;pointer-events:none;transition:opacity .2s,transform .1s}
+.btn-next-q:active{transform:scale(.97)}
+.btn-next-q.on{opacity:1;pointer-events:all}
+
+/* ── PERSONALITY REVEAL ── */
+.pers-eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:.5rem;text-align:center}
+.pers-name{font-size:13px;color:var(--text2);margin-bottom:2rem;text-align:center}
+.pers-card{border-radius:var(--rl);padding:2rem 1.5rem;margin-bottom:1.5rem;position:relative;overflow:hidden}
+.pers-card::before{content:'';position:absolute;top:-40px;right:-40px;width:160px;height:160px;border-radius:50%;opacity:.12}
+.pers-card.safe{background:var(--safe-l);border:0.5px solid var(--safe)}
+.pers-card.safe::before{background:var(--safe)}
+.pers-card.risk{background:var(--risk-l);border:0.5px solid var(--risk)}
+.pers-card.risk::before{background:var(--risk)}
+.pers-card.passion{background:var(--passion-l);border:0.5px solid var(--passion)}
+.pers-card.passion::before{background:var(--passion)}
+.pers-type-icon{font-size:48px;margin-bottom:.8rem;text-align:center}
+.pers-type{font-size:22px;font-weight:700;margin-bottom:.4rem;text-align:center}
+.pers-type.safe{color:var(--safe-d)}
+.pers-type.risk{color:var(--risk-d)}
+.pers-type.passion{color:var(--passion-d)}
+.pers-desc{font-size:14px;color:var(--text2);line-height:1.7;text-align:center}
+.traits{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:1rem}
+.trait{font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;letter-spacing:.04em}
+.trait.safe{background:var(--safe-l);color:var(--safe-d)}
+.trait.risk{background:var(--risk-l);color:var(--risk-d)}
+.trait.passion{background:var(--passion-l);color:var(--passion-d)}
+.score-bars{margin:1.5rem 0;text-align:left}
+.score-row{margin-bottom:10px}
+.score-meta{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px}
+.score-track{height:8px;background:var(--bg3);border-radius:4px;overflow:hidden}
+.score-fill{height:100%;border-radius:4px;transition:width 1.2s cubic-bezier(.25,.8,.25,1)}
+.score-fill.safe{background:var(--safe)}
+.score-fill.risk{background:var(--risk)}
+.score-fill.passion{background:var(--passion)}
+
+/* ── REEL ── */
+.reel-intro{font-size:11px;color:var(--text3);margin-bottom:.8rem;letter-spacing:.05em;text-transform:uppercase}
+.universe-tabs{display:flex;gap:6px;margin-bottom:1.2rem}
+.utab{flex:1;padding:10px 6px;border-radius:var(--r);border:0.5px solid var(--bd);background:none;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;color:var(--text2)}
+.utab:hover{background:var(--bg2)}
+.utab.safe.on{background:var(--safe-l);border-color:var(--safe);color:var(--safe-d)}
+.utab.risk.on{background:var(--risk-l);border-color:var(--risk);color:var(--risk-d)}
+.utab.passion.on{background:var(--passion-l);border-color:var(--passion);color:var(--passion-d)}
+.ucard{border:0.5px solid var(--bd);border-radius:var(--rl);overflow:hidden;margin-bottom:1.2rem;animation:cardIn .3s ease}
+@keyframes cardIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
+.ucard-banner{height:5px}
+.ucard-banner.safe{background:var(--safe)}
+.ucard-banner.risk{background:var(--risk)}
+.ucard-banner.passion{background:var(--passion)}
+.ucard-body{padding:1.3rem}
+.ucard-tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 10px;border-radius:20px;margin-bottom:.8rem}
+.ucard-tag.safe{background:var(--safe-l);color:var(--safe-d)}
+.ucard-tag.risk{background:var(--risk-l);color:var(--risk-d)}
+.ucard-tag.passion{background:var(--passion-l);color:var(--passion-d)}
+.ucard-name{font-size:22px;font-weight:700;margin-bottom:.2rem}
+.ucard-role{font-size:12px;color:var(--text2);margin-bottom:1rem}
+.ucard-story{font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:1rem;padding-bottom:1rem;border-bottom:0.5px solid var(--bd)}
+.day-section{margin-bottom:1rem}
+.day-title{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:.6rem}
+.day-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.day-slot{background:var(--bg2);border-radius:var(--r);padding:10px}
+.day-time{font-size:10px;color:var(--text3);margin-bottom:2px;font-weight:600}
+.day-act{font-size:12px;color:var(--text);line-height:1.4}
+.timeline{margin-bottom:1rem}
+.tl-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--bd)}
+.tl-item:last-child{border-bottom:none}
+.tl-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.tl-dot.safe{background:var(--safe)}
+.tl-dot.risk{background:var(--risk)}
+.tl-dot.passion{background:var(--passion)}
+.tl-year{font-size:10px;font-weight:700;color:var(--text3);width:32px;flex-shrink:0;margin-top:4px}
+.tl-content{flex:1}
+.tl-event{font-size:13px;color:var(--text);line-height:1.4}
+.tl-mood{font-size:10px;color:var(--text3);margin-top:2px}
+.happiness-section{margin-bottom:1rem}
+.hap-title{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:.6rem}
+.hap-chart{height:80px;position:relative}
+.hap-chart svg{width:100%;height:100%}
+.ucard-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1rem}
+.stat-chip{background:var(--bg2);border-radius:var(--r);padding:12px 8px;text-align:center}
+.stat-val{font-size:15px;font-weight:700;color:var(--text)}
+.stat-lbl{font-size:10px;color:var(--text3);margin-top:2px}
+.quote-box{background:var(--bg2);border-left:3px solid var(--bd2);border-radius:0 var(--r) var(--r) 0;padding:12px 14px;margin-bottom:1rem}
+.quote-text{font-size:13px;color:var(--text2);line-height:1.6;font-style:italic}
+.quote-attr{font-size:11px;color:var(--text3);margin-top:4px}
+
+/* ── CHOOSE ── */
+.choose-reveal{background:var(--bg2);border-radius:var(--rl);padding:1.5rem;margin-bottom:1.5rem;text-align:center;border:0.5px solid var(--bd)}
+.cr-eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:.4rem}
+.cr-name{font-size:26px;font-weight:700;margin-bottom:.4rem}
+.cr-badge{display:inline-block;font-size:11px;font-weight:700;padding:4px 14px;border-radius:20px;margin-bottom:.8rem}
+.cr-desc{font-size:14px;color:var(--text2);line-height:1.65}
+.choose-q{font-size:16px;font-weight:700;text-align:center;margin-bottom:.4rem}
+.choose-sub{font-size:13px;color:var(--text3);text-align:center;margin-bottom:1.2rem}
+.choose-opts{display:flex;flex-direction:column;gap:10px}
+.copt{background:var(--bg);border:0.5px solid var(--bd2);border-radius:var(--rl);padding:16px;cursor:pointer;display:flex;align-items:center;gap:14px;transition:all .2s;text-align:left;width:100%}
+.copt:hover{background:var(--bg2)}
+.copt.sel.safe{border:2px solid var(--safe);background:var(--safe-l)}
+.copt.sel.risk{border:2px solid var(--risk);background:var(--risk-l)}
+.copt.sel.passion{border:2px solid var(--passion);background:var(--passion-l)}
+.copt-icon{font-size:22px;flex-shrink:0}
+.copt-label{font-size:15px;font-weight:600;color:var(--text)}
+.copt-desc{font-size:12px;color:var(--text2);margin-top:2px}
+.regret-q{background:var(--bg2);border-radius:var(--rl);padding:1.2rem;margin-top:1.2rem;border:0.5px solid var(--bd)}
+.regret-title{font-size:13px;font-weight:600;margin-bottom:.8rem}
+.regret-opts{display:flex;flex-direction:column;gap:6px}
+.ropt{background:var(--bg);border:0.5px solid var(--bd);border-radius:var(--r);padding:10px 14px;font-size:13px;cursor:pointer;text-align:left;color:var(--text);transition:all .15s;width:100%}
+.ropt:hover{background:var(--bg3)}
+.ropt.sel{background:var(--bg3);border-color:var(--bd2);font-weight:600}
+
+/* ── STATS ── */
+.stats-h{font-size:22px;font-weight:700;margin-bottom:.3rem;text-align:center}
+.stats-sub{font-size:14px;color:var(--text2);text-align:center;margin-bottom:2rem}
+.your-pick{text-align:center;background:var(--bg2);border-radius:var(--rl);padding:1.2rem;margin-bottom:1.5rem;border:0.5px solid var(--bd)}
+.yp-label{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:.3rem}
+.yp-value{font-size:18px;font-weight:700}
+.bar-section{margin-bottom:2rem}
+.bar-row{margin-bottom:1.2rem}
+.bar-meta{display:flex;justify-content:space-between;margin-bottom:4px;align-items:center}
+.bar-name{font-size:14px;font-weight:600}
+.bar-pct{font-size:13px;color:var(--text2);font-weight:600}
+.bar-track{height:12px;background:var(--bg3);border-radius:6px;overflow:hidden}
+.bar-fill{height:100%;border-radius:6px;transition:width 1.2s cubic-bezier(.25,.8,.25,1)}
+.bar-fill.safe{background:var(--safe)}
+.bar-fill.risk{background:var(--risk)}
+.bar-fill.passion{background:var(--passion)}
+.bar-votes{font-size:11px;color:var(--text3);margin-top:3px}
+.regret-stats{background:var(--bg2);border-radius:var(--rl);padding:1.2rem;margin-bottom:1.5rem;border:0.5px solid var(--bd)}
+.rst-title{font-size:14px;font-weight:600;margin-bottom:.8rem}
+.rst-item{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--text2);padding:5px 0;border-bottom:0.5px solid var(--bd)}
+.rst-item:last-child{border-bottom:none}
+.rst-pct{font-weight:600;color:var(--text)}
+.wisdom-wall{margin-bottom:1.5rem}
+.ww-title{font-size:14px;font-weight:600;margin-bottom:.8rem}
+.ww-item{background:var(--bg2);border-radius:var(--r);padding:12px 14px;margin-bottom:8px;border:0.5px solid var(--bd)}
+.ww-text{font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:4px}
+.ww-attr{font-size:11px;color:var(--text3)}
+.ending{background:var(--bg2);border-radius:var(--rl);padding:2rem;text-align:center;border:0.5px solid var(--bd)}
+.end-q{font-size:20px;font-weight:700;line-height:1.45;margin-bottom:.6rem}
+.end-sub{font-size:13px;color:var(--text2);margin-bottom:1.5rem}
+.end-actions{display:flex;flex-direction:column;gap:8px}
+.share-btn{background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:13px;font-size:14px;font-weight:600;cursor:pointer;transition:opacity .15s;width:100%}
+.share-btn:hover{opacity:.88}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:var(--bg);padding:10px 20px;border-radius:var(--r);font-size:13px;font-weight:600;z-index:999;transition:transform .35s ease;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* inner padding wrapper used on most screens */
+.screen-pad{padding:1rem 1.5rem 2rem}
+</style>
+</head>
+<body>
+<div id="particles"></div>
+<div class="app">
+
+<!-- HOOK -->
+<div id="hook" class="screen">
+  <p class="hook-tag">✦ Multiverse Experience</p>
+  <div class="orbs"><div class="orb s"></div><div class="orb r"></div><div class="orb p"></div></div>
+  <h1 class="hook-h1">What if one small decision changed your entire life?</h1>
+  <p class="hook-sub">Explore 3 parallel versions of your life. Based on your choices. Deeply personal.</p>
+  <div class="hook-features">
+    <div class="hf-card"><div class="hf-icon">🧬</div><div class="hf-label">Personality DNA</div></div>
+    <div class="hf-card"><div class="hf-icon">🌌</div><div class="hf-label">3 Universes</div></div>
+    <div class="hf-card"><div class="hf-icon">📊</div><div class="hf-label">Live Stats</div></div>
+    <div class="hf-card"><div class="hf-icon">⏱</div><div class="hf-label">Day in the Life</div></div>
+    <div class="hf-card"><div class="hf-icon">💬</div><div class="hf-label">Wisdom Wall</div></div>
+    <div class="hf-card"><div class="hf-icon">😔</div><div class="hf-label">Regret Index</div></div>
+  </div>
+  <div class="hook-cta-wrap">
+    <button class="btn btn-dark" onclick="go('name-screen')">Begin your journey →</button>
+  </div>
+  <p class="hook-meta">Takes ~2 minutes · No sign-up needed</p>
+</div>
+
+<!-- NAME INPUT -->
+<div id="name-screen" class="screen">
+  <div class="topbar">
+    <button class="back-btn" onclick="go('hook')">←</button>
+    <span class="topbar-title">Let's start</span>
+  </div>
+  <div class="screen-pad">
+    <p class="ns-title">What's your name?</p>
+    <p class="ns-sub">We'll personalize your parallel lives just for you.</p>
+    <input class="name-input" id="name-input" type="text" placeholder="Your name…" maxlength="20" oninput="checkName()"/>
+    <p class="name-hint">Choose an avatar too:</p>
+    <div class="avatar-row" id="avatar-row"></div>
+    <button class="btn btn-dark" id="name-next-btn" onclick="go('quiz')" style="opacity:.4;pointer-events:none">Continue →</button>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div id="quiz" class="screen">
+  <div class="topbar">
+    <!-- FIX 3: Back button correctly goes to previous question, not name-screen -->
+    <button class="back-btn" id="quiz-back-top" onclick="quizBackTop()">←</button>
+    <span class="topbar-title">Quiz</span>
+    <div class="topbar-right"><span id="quiz-timer" style="font-size:12px;color:var(--text3)"></span></div>
+  </div>
+  <div class="screen-pad">
+    <div class="q-progress-wrap">
+      <div class="q-progress-bar"><div class="q-progress-fill" id="q-prog-fill"></div></div>
+      <div class="q-progress-label"><span id="q-prog-label">Question 1 of 5</span><span id="q-prog-pct">0%</span></div>
+    </div>
+    <p class="q-eyebrow" id="q-num"></p>
+    <p class="q-text" id="q-text"></p>
+    <p class="q-hint" id="q-hint"></p>
+    <div class="options" id="q-options"></div>
+    <div class="q-nav">
+      <!-- FIX 3b: bottom back button also handled by prevQ -->
+      <button class="btn-outline btn" id="q-back" onclick="prevQ()" style="width:auto">← Back</button>
+      <button class="btn-next-q" id="q-next" onclick="nextQ()">Continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- PERSONALITY REVEAL -->
+<div id="personality" class="screen">
+  <div class="topbar">
+    <button class="back-btn" onclick="go('quiz')">←</button>
+  </div>
+  <div class="screen-pad">
+    <p class="pers-eyebrow">Your personality type</p>
+    <p class="pers-name" id="pers-greeting"></p>
+    <div class="pers-card" id="pers-card">
+      <div class="pers-type-icon" id="pers-icon"></div>
+      <p class="pers-type" id="pers-type"></p>
+      <p class="pers-desc" id="pers-desc"></p>
+      <div class="traits" id="pers-traits"></div>
+    </div>
+    <div class="score-bars" id="score-bars"></div>
+    <button class="btn btn-dark" onclick="go('reel')">Explore my universes →</button>
+  </div>
+</div>
+
+<!-- REEL -->
+<div id="reel" class="screen">
+  <div class="topbar">
+    <button class="back-btn" onclick="go('personality')">←</button>
+    <span class="topbar-title">Your parallel lives</span>
+  </div>
+  <div class="screen-pad">
+    <p class="reel-intro">Tap to explore each universe</p>
+    <div class="universe-tabs">
+      <button class="utab safe on" onclick="showU('safe')">🛡 Safe</button>
+      <button class="utab risk"    onclick="showU('risk')">⚡ Bold</button>
+      <button class="utab passion" onclick="showU('passion')">❤️ Passion</button>
+    </div>
+    <div class="ucard" id="u-card"></div>
+    <button class="btn btn-dark" onclick="go('choose-screen')">Choose your universe →</button>
+  </div>
+</div>
+
+<!-- CHOOSE -->
+<div id="choose-screen" class="screen">
+  <div class="topbar">
+    <button class="back-btn" onclick="go('reel')">←</button>
+    <span class="topbar-title">Your choice</span>
+  </div>
+  <div class="screen-pad">
+    <div class="choose-reveal" id="match-reveal"></div>
+    <p class="choose-q">Which life would you choose?</p>
+    <p class="choose-sub">Your vote joins thousands of others worldwide.</p>
+    <div class="choose-opts" id="choose-opts"></div>
+    <div class="regret-q" id="regret-q" style="display:none">
+      <p class="regret-title">What would you fear most in the life you didn't choose?</p>
+      <div class="regret-opts" id="regret-opts"></div>
+    </div>
+    <!-- FIX 4: Removed duplicate style attribute - only one style tag allowed per element -->
+    <div style="margin-top:1.5rem;display:none" id="choose-next">
+      <button class="btn btn-dark" onclick="go('stats-screen')">See global results →</button>
+    </div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div id="stats-screen" class="screen">
+  <div class="topbar">
+    <button class="back-btn" onclick="go('choose-screen')">←</button>
+    <span class="topbar-title">Global results</span>
+  </div>
+  <div class="screen-pad">
+    <p class="stats-h">How the world chooses</p>
+    <p class="stats-sub" id="stats-sub"></p>
+    <div class="your-pick">
+      <p class="yp-label">Your choice</p>
+      <p class="yp-value" id="yp-value"></p>
+    </div>
+    <div class="bar-section" id="bars"></div>
+    <div class="regret-stats" id="regret-stats"></div>
+    <div class="wisdom-wall" id="wisdom-wall"></div>
+    <div class="ending">
+      <p class="end-q">"Your life is still loading…<br>choose wisely."</p>
+      <p class="end-sub">Every decision shapes a universe. Make yours count.</p>
+      <div class="end-actions">
+        <button class="share-btn" onclick="shareResult()">Share your result ↗</button>
+        <button class="btn btn-outline" onclick="restart()" style="margin-top:4px">Start over ↺</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- .app -->
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const AVATARS = ['🧑','👩','🧔','👩‍🦱','🧑‍🦰','👨‍🦳','🧑‍🦲','👩‍🦳'];
+let userName = '', userAvatar = '🧑', currentQ = 0, answers = [], chosenU = null, chosenRegret = null;
+let timerInterval, timerSec = 0;
+let globalVotes = {safe:1247, risk:892, passion:1863};
+
+// FIX 2: regretVotes keys now match the exact short-key used in renderRegretQ
+// We store full sentence → count, keyed by the first word so lookup works
+let regretVotes = {};
+
+const QUESTIONS = [
+  {
+    text:"When facing a fork in the road, you…",
+    hint:"Think of a real moment in your life.",
+    opts:[
+      {icon:'🛡',label:'Choose the proven path',desc:'Safety first, always',val:'safe'},
+      {icon:'⚡',label:'Take the riskier route',desc:'Potential beats security',val:'risk'},
+      {icon:'❤️',label:'Follow what excites you',desc:'Even if it seems foolish',val:'passion'}
+    ]
+  },
+  {
+    text:"Your dream success looks like…",
+    hint:"Be completely honest — no wrong answers.",
+    opts:[
+      {icon:'🏠',label:'A paid-off house, savings, peace',desc:'Quiet wins are still wins',val:'safe'},
+      {icon:'🚀',label:'Building something the world talks about',desc:'Legacy > comfort',val:'risk'},
+      {icon:'🎭',label:'Creating work that moves people',desc:'Art, story, or meaning',val:'passion'}
+    ]
+  },
+  {
+    text:"On a Sunday evening, you feel most at peace…",
+    hint:"Where you recharge matters.",
+    opts:[
+      {icon:'📺',label:'At home, routine, early to bed',desc:"Monday won't catch me off guard",val:'safe'},
+      {icon:'💡',label:'Mapping out my next big move',desc:'Rest is for the finish line',val:'risk'},
+      {icon:'🌙',label:'Creating, journaling, or dreaming',desc:'Sundays are for the soul',val:'passion'}
+    ]
+  },
+  {
+    text:"If you failed publicly, you'd…",
+    hint:"Gut reaction, not the ideal answer.",
+    opts:[
+      {icon:'🤐',label:'Wish I had never tried',desc:'The embarrassment would haunt me',val:'safe'},
+      {icon:'💪',label:'Analyze it and try again faster',desc:'Failure is just data',val:'risk'},
+      {icon:'✍️',label:'Turn it into a story or lesson',desc:'Experience feeds creativity',val:'passion'}
+    ]
+  },
+  {
+    text:"In 30 years, what would haunt you most?",
+    hint:"This one reveals your true values.",
+    opts:[
+      {icon:'😰',label:'Being broke or unstable',desc:'Security is survival',val:'safe'},
+      {icon:'😞',label:'Never having tried the big thing',desc:'Regret of inaction',val:'risk'},
+      {icon:'💔',label:"Living someone else's life",desc:'Losing your authentic self',val:'passion'}
+    ]
+  }
+];
+
+const PERSONALITIES = {
+  safe:{
+    icon:'🌿', type:'The Anchor',
+    desc:"You are the person others lean on. You build slowly, steadily, and deliberately. Where others see risk, you see recklessness. You understand that peace is not boring — it is hard-won.",
+    traits:['Reliable','Thoughtful','Grounded','Patient','Strategic'],
+    color:'safe'
+  },
+  risk:{
+    icon:'⚡', type:'The Catalyst',
+    desc:"You move fast and think faster. Comfort zones aren't just limiting to you — they're suffocating. You have an almost irrational belief that things will work out, and somehow, they usually do.",
+    traits:['Bold','Visionary','Resilient','Driven','Adaptive'],
+    color:'risk'
+  },
+  passion:{
+    icon:'🎭', type:'The Seeker',
+    desc:"You are guided by meaning, not metrics. Where others optimize for output, you optimize for depth. Your work is personal, your connections are real, and your life feels chosen — not assigned.",
+    traits:['Creative','Empathetic','Authentic','Curious','Expressive'],
+    color:'passion'
+  }
+};
+
+const UNIVERSES = {
+  safe:{
+    tag:'Universe 1', name:'The Steady Life', role:'Senior Manager · Homeowner · Weekend Traveler',
+    story:"You chose security. Your life has rhythm — good coffee, familiar faces, a job that respects your time. Some call it ordinary. You call it earned.",
+    color:'safe',
+    dayLife:[
+      {time:'7:00 AM',act:'Morning run, same 5K route'},
+      {time:'9:00 AM',act:'Standup meeting, action items'},
+      {time:'1:00 PM',act:'Lunch at the usual spot'},
+      {time:'6:00 PM',act:'Home. Dinner. Actually present.'},
+      {time:'9:00 PM',act:'Reading. Asleep by 10:30.'},
+      {time:'Weekend',act:'Farmers market, long drives'}
+    ],
+    timeline:[
+      {year:"'24",event:'Joined stable company, learned the system',mood:'Nervous but grateful'},
+      {year:"'27",event:'Promoted. First real savings account.',mood:'Quietly proud'},
+      {year:"'30",event:'Bought apartment. Parents cried.',mood:'Peaceful'},
+      {year:"'34",event:'Met partner. Life clicked into place.',mood:'Complete'},
+      {year:"'40",event:'Early retirement plans taking shape.',mood:'Satisfied'}
+    ],
+    happiness:[40,55,65,70,72,75,78,80,82,85],
+    stats:[{v:'94%',l:'Job security'},{v:'Low',l:'Daily stress'},{v:'High',l:'Net worth'}],
+    quote:{text:'I used to want more. Then I realized more was right here.',attr:'You, at 38, in your garden'}
+  },
+  risk:{
+    tag:'Universe 2', name:'The Bold Life', role:'Founder · Investor · Two-time Failure, One-time Winner',
+    story:"You bet on yourself. The first time hurt. The second time almost broke you. The third time changed everything. You've felt broke, then brilliant, then terrified again.",
+    color:'risk',
+    dayLife:[
+      {time:'5:30 AM',act:'Cold shower, audio books'},
+      {time:'7:00 AM',act:'Calls with overseas team'},
+      {time:'10:00 AM',act:'Investor pitch (your 4th this week)'},
+      {time:'2:00 PM',act:'Product review, hard feedback'},
+      {time:'8:00 PM',act:'Dinner at desk. Again.'},
+      {time:'Midnight',act:'One more thing before sleep'}
+    ],
+    timeline:[
+      {year:"'23",event:'Quit job. Savings: 3 months of runway.',mood:'Terrified and alive'},
+      {year:"'25",event:'Startup 1 failed. $40K lost.',mood:'Devastated'},
+      {year:"'27",event:'Startup 2 — traction. First hire.',mood:'Obsessed'},
+      {year:"'30",event:'Series A funded. Team of 12.',mood:'Electric'},
+      {year:"'35",event:'Acquisition offer. Said yes.',mood:'Exhausted relief'}
+    ],
+    happiness:[30,20,45,55,60,40,70,85,75,88],
+    stats:[{v:'3×',l:'Failed first'},{v:'$2.1M',l:'Exit value'},{v:'High',l:'Regret risk'}],
+    quote:{text:'Every scar taught me something the MBA never could.',attr:'You, speaking at a conference, age 36'}
+  },
+  passion:{
+    tag:'Universe 3', name:'The Felt Life', role:'Creator · Storyteller · Full-time Wanderer',
+    story:"You traded stability for soul. Not every month made sense on paper. But every day felt chosen. Your work lives in people — in the songs they hum, the pages they fold.",
+    color:'passion',
+    dayLife:[
+      {time:'9:00 AM',act:'Coffee, journal, no alarm needed'},
+      {time:'11:00 AM',act:'Deep work — create, make, build'},
+      {time:'2:00 PM',act:'Long walk without destination'},
+      {time:'4:00 PM',act:'Reply to community messages'},
+      {time:'7:00 PM',act:'Dinner with someone interesting'},
+      {time:'11:00 PM',act:"Reading. Inspired. Can't sleep."}
+    ],
+    timeline:[
+      {year:"'23",event:'Moved cities alone. Pursued the craft.',mood:'Lonely but alive'},
+      {year:"'26",event:'First paid creative work. $200.',mood:'Validated'},
+      {year:"'29",event:'Audience found you. Strangers cared.',mood:'Overwhelmed'},
+      {year:"'33",event:'Book deal. Small advance. Didn\'t care.',mood:'Joyful'},
+      {year:"'38",event:'Your work taught in a school somewhere.',mood:'Moved to tears'}
+    ],
+    happiness:[35,45,50,55,65,70,75,72,80,85],
+    stats:[{v:'Real',l:'Daily meaning'},{v:'Deep',l:'Connections'},{v:'Yours',l:'Every day'}],
+    quote:{text:"I don't have a 401K. I have a life I'd read about.",attr:'You, in a rooftop conversation, age 31'}
+  }
+};
+
+const CHOOSE_DATA = {
+  safe:   {icon:'🛡', label:'The Steady Life',   desc:'Security, peace, and quiet wins'},
+  risk:   {icon:'⚡', label:'The Bold Life',     desc:'Ambition, chaos, and eventual triumph'},
+  passion:{icon:'❤️', label:'The Felt Life',     desc:'Meaning, creativity, and authentic living'}
+};
+
+// FIX 2: Regret options defined once as objects with a short key + full label.
+// renderRegretQ uses these objects to both display the label AND use the key for regretVotes.
+const REGRET_OPTIONS = {
+  safe:[
+    {key:'Missing adventure',      label:'Missing a big adventure'},
+    {key:'Never tried startup',    label:'Never trying the startup idea'},
+    {key:'What if I risked it',    label:'Wondering "what if I had risked it"'},
+    {key:'Safe with love',         label:'Playing it too safe with love'}
+  ],
+  risk:[
+    {key:'Going broke',            label:'Going broke and losing everything'},
+    {key:'Sacrificed relationships',label:'Sacrificing relationships for work'},
+    {key:'Burnout',                label:'The burnout that breaks you'},
+    {key:'One normal week',        label:'Wishing for one normal week'}
+  ],
+  passion:[
+    {key:'Financial instability',  label:'Financial instability forever'},
+    {key:'Too late for family',    label:'Being too late to start a family'},
+    {key:'World not caring',       label:'The world not caring about your work'},
+    {key:'Meaning over security',  label:'Choosing meaning over security'}
+  ]
+};
+
+const WISDOM = [
+  {text:"I chose safe. Raised two kids, no debt. Wouldn't trade it.",attr:'User from Lagos · Safe life'},
+  {text:'Failed three times. The fourth attempt made me a millionaire.',attr:'User from Mumbai · Bold life'},
+  {text:"My art doesn't pay brilliantly but I've never dreaded a Monday.",attr:'User from Berlin · Passion path'},
+  {text:'I chose risk at 24. At 40, I chose steady. Both were right for their time.',attr:'User from São Paulo · Bold → Safe'},
+  {text:"Nobody on their deathbed regrets following their heart.",attr:'User from Manila · Passion path'}
+];
+
+// ── Particles ──────────────────────────────────────────────────────────────
+
+function initParticles(){
+  const cont = document.getElementById('particles');
+  const cols = ['#1D9E75','#EF9F27','#D4537E','#534AB7'];
+  for(let i = 0; i < 18; i++){
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const s = 6 + Math.random() * 10;
+    p.style.cssText = `width:${s}px;height:${s}px;left:${Math.random()*100}%;background:${cols[i%4]};animation-duration:${8+Math.random()*14}s;animation-delay:${Math.random()*8}s`;
+    cont.appendChild(p);
+  }
+}
+
+// ── Avatars ────────────────────────────────────────────────────────────────
+
+function initAvatars(){
+  const row = document.getElementById('avatar-row');
+  row.innerHTML = '';
+  AVATARS.forEach((a, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'avatar-opt' + (i === 0 ? ' selected' : '');
+    btn.textContent = a;
+    btn.onclick = () => {
+      userAvatar = a;
+      row.querySelectorAll('.avatar-opt').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    };
+    row.appendChild(btn);
+  });
+  userAvatar = AVATARS[0];
+}
+
+// ── Name check ─────────────────────────────────────────────────────────────
+
+function checkName(){
+  const v = document.getElementById('name-input').value.trim();
+  userName = v;
+  const btn = document.getElementById('name-next-btn');
+  btn.style.opacity = v.length > 0 ? '1' : '0.4';
+  btn.style.pointerEvents = v.length > 0 ? 'all' : 'none';
+}
+
+// ── Screen navigation ──────────────────────────────────────────────────────
+
+function go(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  el.classList.add('active');
+  window.scrollTo(0, 0);
+
+  if(id === 'quiz')           renderQuestion();
+  if(id === 'personality')    renderPersonality();
+  if(id === 'reel')           showU('safe');
+  if(id === 'choose-screen')  renderChoose();
+  if(id === 'stats-screen')   renderStats();
+}
+
+// ── FIX 3: Topbar back button in quiz ──────────────────────────────────────
+// If on Q0, go back to name-screen; otherwise go to previous question.
+function quizBackTop(){
+  if(currentQ === 0){
+    go('name-screen');
+  } else {
+    prevQ();
+  }
+}
+
+// ── Quiz timer ─────────────────────────────────────────────────────────────
+
+function startTimer(){
+  timerSec = 0;
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timerSec++;
+    const el = document.getElementById('quiz-timer');
+    if(el) el.textContent = `${timerSec}s`;
+  }, 1000);
+}
+
+// ── Quiz render ────────────────────────────────────────────────────────────
+
+function renderQuestion(){
+  if(currentQ === 0) startTimer();
+
+  const q = QUESTIONS[currentQ];
+  const pct = Math.round((currentQ / QUESTIONS.length) * 100);
+
+  document.getElementById('q-prog-fill').style.width  = pct + '%';
+  document.getElementById('q-prog-label').textContent = `Question ${currentQ+1} of ${QUESTIONS.length}`;
+  document.getElementById('q-prog-pct').textContent   = pct + '%';
+  document.getElementById('q-num').textContent        = `Q${currentQ+1}`;
+  document.getElementById('q-text').textContent       = q.text;
+  document.getElementById('q-hint').textContent       = q.hint;
+
+  // FIX 3: bottom back button hidden on Q0 (topbar handles it)
+  document.getElementById('q-back').style.visibility = currentQ === 0 ? 'hidden' : 'visible';
+
+  const nextBtn = document.getElementById('q-next');
+  nextBtn.textContent = currentQ === QUESTIONS.length - 1 ? 'See results →' : 'Continue';
+  // FIX 5: Check answers[currentQ] is a non-undefined string
+  nextBtn.classList.toggle('on', typeof answers[currentQ] === 'string');
+
+  const opts = document.getElementById('q-options');
+  opts.innerHTML = '';
+  q.opts.forEach(o => {
+    const btn = document.createElement('button');
+    btn.className = 'opt' + (answers[currentQ] === o.val ? ' sel' : '');
+    btn.innerHTML = `<span class="opt-icon">${o.icon}</span><div><div class="opt-label">${o.label}</div><div class="opt-desc">${o.desc}</div></div>`;
+    btn.onclick = () => {
+      opts.querySelectorAll('.opt').forEach(b => b.classList.remove('sel'));
+      btn.classList.add('sel');
+      answers[currentQ] = o.val;
+      nextBtn.classList.add('on');
+    };
+    opts.appendChild(btn);
+  });
+}
+
+function nextQ(){
+  if(currentQ < QUESTIONS.length - 1){
+    currentQ++;
+    renderQuestion();
+  } else {
+    clearInterval(timerInterval);
+    go('personality');
+  }
+}
+
+function prevQ(){
+  if(currentQ > 0){
+    currentQ--;
+    renderQuestion();
+  }
+}
+
+// ── Personality ────────────────────────────────────────────────────────────
+
+// FIX 5: calcMatch filters out undefined entries before counting
+function calcMatch(){
+  const t = {safe:0, risk:0, passion:0};
+  answers.filter(a => typeof a === 'string').forEach(a => { t[a]++; });
+  return Object.entries(t).sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function renderPersonality(){
+  const match = calcMatch();
+  const p = PERSONALITIES[match];
+  const t = {safe:0, risk:0, passion:0};
+  answers.filter(a => typeof a === 'string').forEach(a => { t[a]++; });
+  const total = answers.filter(a => typeof a === 'string').length || 1;
+
+  document.getElementById('pers-greeting').textContent =
+    `${userAvatar} ${userName}, here's who you are across the multiverse`;
+
+  const card = document.getElementById('pers-card');
+  card.className = `pers-card ${match}`;
+
+  document.getElementById('pers-icon').textContent     = p.icon;
+  document.getElementById('pers-type').textContent     = p.type;
+  document.getElementById('pers-type').className       = `pers-type ${match}`;
+  document.getElementById('pers-desc').textContent     = p.desc;
+
+  const traitsEl = document.getElementById('pers-traits');
+  traitsEl.innerHTML = p.traits.map(tr => `<span class="trait ${match}">${tr}</span>`).join('');
+
+  const bars = document.getElementById('score-bars');
+  bars.innerHTML = '<div style="font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:.8rem">Your tendency breakdown</div>' +
+    ['safe','risk','passion'].map(type => {
+      const pct = Math.round((t[type] / total) * 100);
+      const lbl = {safe:'Stability', risk:'Ambition', passion:'Passion'}[type];
+      return `<div class="score-row">
+        <div class="score-meta">
+          <span style="font-size:13px;font-weight:600">${lbl}</span>
+          <span style="font-size:13px;color:var(--text2)">${pct}%</span>
+        </div>
+        <div class="score-track">
+          <div class="score-fill ${type}" style="width:0%" data-pct="${pct}"></div>
+        </div>
+      </div>`;
+    }).join('');
+
+  setTimeout(() => {
+    bars.querySelectorAll('.score-fill').forEach(el => el.style.width = el.dataset.pct + '%');
+  }, 100);
+}
+
+// ── Universe reel ──────────────────────────────────────────────────────────
+
+function showU(type){
+  document.querySelectorAll('.utab').forEach(t => t.classList.remove('on'));
+  document.querySelector('.utab.' + type).classList.add('on');
+
+  const u = UNIVERSES[type];
+  const card = document.getElementById('u-card');
+  const strokeColor = {safe:'#1D9E75', risk:'#EF9F27', passion:'#D4537E'}[type];
+  const hapPath = buildHapPath(u.happiness);
+
+  card.innerHTML = `
+    <div class="ucard-banner ${u.color}"></div>
+    <div class="ucard-body">
+      <span class="ucard-tag ${u.color}">${u.tag}</span>
+      <p class="ucard-name">${u.name}</p>
+      <p class="ucard-role">${u.role}</p>
+      <p class="ucard-story">${u.story}</p>
+
+      <div class="day-section">
+        <p class="day-title">A day in this life</p>
+        <div class="day-grid">${u.dayLife.map(d =>
+          `<div class="day-slot">
+            <div class="day-time">${d.time}</div>
+            <div class="day-act">${d.act}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+
+      <div class="happiness-section">
+        <p class="hap-title">Happiness over time</p>
+        <div class="hap-chart">
+          <svg viewBox="0 0 300 70" preserveAspectRatio="none">
+            <path d="${hapPath}" fill="none" stroke="${strokeColor}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+            <path d="${hapPath} L300,70 L0,70 Z" fill="${strokeColor}" opacity=".08"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="timeline">${u.timeline.map(t =>
+        `<div class="tl-item">
+          <div class="tl-dot ${u.color}"></div>
+          <span class="tl-year">${t.year}</span>
+          <div class="tl-content">
+            <div class="tl-event">${t.event}</div>
+            <div class="tl-mood">${t.mood}</div>
+          </div>
+        </div>`).join('')}
+      </div>
+
+      <div class="ucard-stats">${u.stats.map(s =>
+        `<div class="stat-chip">
+          <div class="stat-val">${s.v}</div>
+          <div class="stat-lbl">${s.l}</div>
+        </div>`).join('')}
+      </div>
+
+      <div class="quote-box">
+        <div class="quote-text">"${u.quote.text}"</div>
+        <div class="quote-attr">— ${u.quote.attr}</div>
+      </div>
+    </div>`;
+}
+
+function buildHapPath(vals){
+  const w = 300, h = 70, pad = 5;
+  return vals.map((v, i) => {
+    const x = (i / (vals.length - 1)) * (w - pad*2) + pad;
+    const y = h - pad - (v / 100) * (h - pad*2);
+    return (i === 0 ? `M${x},${y}` : `L${x},${y}`);
+  }).join(' ');
+}
+
+// ── Choose screen ──────────────────────────────────────────────────────────
+
+function renderChoose(){
+  const match = calcMatch();
+  const u = UNIVERSES[match];
+
+  document.getElementById('match-reveal').innerHTML = `
+    <p class="cr-eyebrow">${userName}, you are closest to</p>
+    <p class="cr-name">${u.name}</p>
+    <span class="cr-badge" style="background:var(--${match}-l);color:var(--${match}-d)">${u.tag}</span>
+    <p class="cr-desc">${u.story}</p>`;
+
+  // Reset state
+  chosenU = null;
+  document.getElementById('regret-q').style.display  = 'none';
+  document.getElementById('choose-next').style.display = 'none';
+
+  const opts = document.getElementById('choose-opts');
+  opts.innerHTML = '';
+  ['safe','risk','passion'].forEach(type => {
+    const c = CHOOSE_DATA[type];
+    const btn = document.createElement('button');
+    btn.className = `copt ${type}`;
+    btn.innerHTML = `<span class="copt-icon">${c.icon}</span><div><div class="copt-label">${c.label}</div><div class="copt-desc">${c.desc}</div></div>`;
+    btn.onclick = () => {
+      if(chosenU !== type){
+        // Remove previous vote if switching
+        if(chosenU) globalVotes[chosenU]--;
+        chosenU = type;
+        globalVotes[type]++;
+      }
+      opts.querySelectorAll('.copt').forEach(b => b.classList.remove('sel'));
+      btn.classList.add('sel');
+      document.getElementById('regret-q').style.display  = 'block';
+      document.getElementById('choose-next').style.display = 'block';
+      renderRegretQ(type);
+    };
+    opts.appendChild(btn);
+  });
+}
+
+// FIX 2: renderRegretQ now uses the REGRET_OPTIONS object with keys for accurate vote tracking
+function renderRegretQ(chosenType){
+  const opts = REGRET_OPTIONS[chosenType];
+  const el = document.getElementById('regret-opts');
+  el.innerHTML = '';
+  chosenRegret = null;
+
+  opts.forEach(r => {
+    const btn = document.createElement('button');
+    btn.className = 'ropt';
+    btn.textContent = r.label;
+    btn.onclick = () => {
+      // Remove previous regret vote
+      if(chosenRegret && regretVotes[chosenRegret] !== undefined){
+        regretVotes[chosenRegret]--;
+        if(regretVotes[chosenRegret] < 0) regretVotes[chosenRegret] = 0;
+      }
+      chosenRegret = r.key;
+      // Add vote using the short key
+      regretVotes[r.key] = (regretVotes[r.key] || 0) + 1;
+      el.querySelectorAll('.ropt').forEach(b => b.classList.remove('sel'));
+      btn.classList.add('sel');
+    };
+    el.appendChild(btn);
+  });
+}
+
+// ── Stats screen ───────────────────────────────────────────────────────────
+
+function renderStats(){
+  const total = Object.values(globalVotes).reduce((a, b) => a + b, 0);
+  document.getElementById('stats-sub').textContent =
+    `${total.toLocaleString()} people have chosen their universe`;
+  document.getElementById('yp-value').textContent =
+    chosenU ? CHOOSE_DATA[chosenU].label : '—';
+
+  // Vote bars
+  const bars = document.getElementById('bars');
+  bars.innerHTML = '';
+  ['passion','safe','risk'].forEach(type => {
+    const pct   = Math.round((globalVotes[type] / total) * 100);
+    const votes = globalVotes[type].toLocaleString();
+    const row   = document.createElement('div');
+    row.className = 'bar-row';
+    row.innerHTML = `
+      <div class="bar-meta">
+        <span class="bar-name">${CHOOSE_DATA[type].label}</span>
+        <span class="bar-pct">${pct}%</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill ${type}" style="width:0%" data-pct="${pct}"></div>
+      </div>
+      <div class="bar-votes">${votes} votes</div>`;
+    bars.appendChild(row);
+  });
+  setTimeout(() => {
+    bars.querySelectorAll('.bar-fill').forEach(el => el.style.width = el.dataset.pct + '%');
+  }, 80);
+
+  // Regret stats — build from accumulated regretVotes
+  const allRegrets = Object.entries(regretVotes).filter(([,v]) => v > 0);
+  const rtotal = allRegrets.reduce((a,[,v]) => a + v, 0) || 1;
+
+  // Seed some baseline data so it's never empty on first run
+  const baselineRegrets = [
+    ['Burnout', 312], ['Going broke', 289], ['Financial instability', 201],
+    ['Meaning over security', 178], ['Missing adventure', 155],
+    ['Never tried startup', 134], ['Safe with love', 98]
+  ];
+  const mergedRegrets = {};
+  baselineRegrets.forEach(([k, v]) => { mergedRegrets[k] = v; });
+  Object.entries(regretVotes).forEach(([k, v]) => {
+    mergedRegrets[k] = (mergedRegrets[k] || 0) + v;
+  });
+  const sortedRegrets = Object.entries(mergedRegrets).sort((a,b) => b[1]-a[1]).slice(0,5);
+  const grandTotal = sortedRegrets.reduce((a,[,v]) => a+v, 0);
+
+  const rEl = document.getElementById('regret-stats');
+  rEl.innerHTML = `<p class="rst-title">Biggest fears people carry</p>` +
+    sortedRegrets.map(([k, v]) => {
+      const pct = Math.round((v / grandTotal) * 100);
+      return `<div class="rst-item"><span>${k}</span><span class="rst-pct">${pct}%</span></div>`;
+    }).join('');
+
+  // Wisdom wall
+  const ww = document.getElementById('wisdom-wall');
+  ww.innerHTML = '<p class="ww-title">Wisdom from others who chose</p>' +
+    WISDOM.map(w =>
+      `<div class="ww-item">
+        <div class="ww-text">"${w.text}"</div>
+        <div class="ww-attr">— ${w.attr}</div>
+      </div>`).join('');
+}
+
+// ── Share ──────────────────────────────────────────────────────────────────
+
+function shareResult(){
+  const match = calcMatch();
+  const u = UNIVERSES[match];
+  const text = `I just discovered my parallel life — "${u.name}". What's yours? 🌌`;
+  if(navigator.share){
+    navigator.share({title:'My Parallel Life', text, url:window.location.href}).catch(()=>{});
+  } else if(navigator.clipboard){
+    navigator.clipboard.writeText(text + ' ' + window.location.href)
+      .then(() => showToast('Copied to clipboard!'));
+  } else {
+    showToast('Share: ' + text);
+  }
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── Restart ────────────────────────────────────────────────────────────────
+
+function restart(){
+  currentQ = 0; answers = []; chosenU = null; chosenRegret = null;
+  userName = ''; userAvatar = '🧑';
+  timerSec = 0; clearInterval(timerInterval);
+  regretVotes = {};
+
+  document.getElementById('name-input').value = '';
+  const btn = document.getElementById('name-next-btn');
+  btn.style.opacity = '0.4';
+  btn.style.pointerEvents = 'none';
+
+  // Re-initialise avatars so selection resets to first
+  initAvatars();
+
+  go('hook');
+}
+
+// ── Boot ───────────────────────────────────────────────────────────────────
+
+initParticles();
+initAvatars();
+go('hook');
+</script>
+</body>
+</html>

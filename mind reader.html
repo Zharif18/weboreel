@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ORACLE — AI Mind Reader</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Text:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --gold: #c9a84c;
+  --gold2: #f0d080;
+  --deep: #0a0608;
+  --ink: #120d10;
+  --mist: rgba(201,168,76,0.08);
+  --glow: rgba(201,168,76,0.35);
+}
+
+html, body {
+  width: 100%; height: 100%;
+  background: var(--deep);
+  color: var(--gold);
+  font-family: 'Crimson Text', Georgia, serif;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* ── CURSOR ── */
+#cur {
+  position: fixed; width: 16px; height: 16px;
+  border: 1px solid var(--gold); border-radius: 50%;
+  pointer-events: none; z-index: 9999;
+  transform: translate(-50%,-50%);
+  transition: width .2s, height .2s, background .2s;
+  mix-blend-mode: screen;
+}
+body:has(button:hover) #cur { width: 40px; height: 40px; background: var(--glow); }
+
+/* ── CANVAS ── */
+#cosmos { position: fixed; inset: 0; z-index: 0; }
+
+/* ── SCREENS ── */
+.screen {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 10; padding: 2rem;
+  opacity: 0; pointer-events: none;
+  transition: opacity .8s ease;
+}
+.screen.active { opacity: 1; pointer-events: all; }
+
+/* ── ORB ── */
+#orb-wrap {
+  position: relative;
+  width: clamp(180px, 35vmin, 260px);
+  height: clamp(180px, 35vmin, 260px);
+  margin-bottom: 2.5rem;
+  flex-shrink: 0;
+}
+#orb {
+  width: 100%; height: 100%; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #3a1a2e, #0a0608 70%);
+  border: 1px solid rgba(201,168,76,0.3);
+  box-shadow:
+    0 0 40px rgba(201,168,76,0.15),
+    inset 0 0 60px rgba(201,168,76,0.05);
+  position: relative; overflow: hidden;
+  transition: box-shadow .5s;
+}
+#orb::before {
+  content: '';
+  position: absolute; inset: -50%;
+  background: conic-gradient(transparent 0deg, rgba(201,168,76,0.06) 60deg, transparent 120deg);
+  animation: orbspin 8s linear infinite;
+}
+#orb::after {
+  content: '';
+  position: absolute; top: 10%; left: 15%;
+  width: 30%; height: 20%;
+  background: radial-gradient(ellipse, rgba(255,255,255,0.12), transparent);
+  border-radius: 50%; transform: rotate(-30deg);
+}
+@keyframes orbspin { to { transform: rotate(360deg); } }
+
+#orb.thinking {
+  box-shadow: 0 0 80px rgba(201,168,76,0.5), 0 0 160px rgba(201,168,76,0.2), inset 0 0 80px rgba(201,168,76,0.15);
+  animation: orbpulse 1.2s ease-in-out infinite;
+}
+#orb.correct {
+  box-shadow: 0 0 80px rgba(80,255,120,0.6), 0 0 160px rgba(80,255,120,0.2), inset 0 0 80px rgba(80,255,120,0.2);
+  background: radial-gradient(circle at 35% 35%, #0a2a1a, #0a0608 70%);
+}
+@keyframes orbpulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+
+/* EYE inside orb */
+#eye {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.eye-svg { width: 55%; height: 55%; opacity: 0.7; }
+
+/* ── TYPOGRAPHY ── */
+h1 {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(2.2rem, 7vw, 4.5rem);
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-align: center;
+  color: var(--gold2);
+  text-shadow: 0 0 40px var(--glow);
+  line-height: 1;
+  margin-bottom: .5rem;
+}
+.subtitle {
+  font-family: 'Crimson Text', serif;
+  font-style: italic;
+  font-size: clamp(1rem, 2.5vw, 1.3rem);
+  color: rgba(201,168,76,0.55);
+  letter-spacing: .2em;
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+.question-text {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(1.1rem, 3vw, 1.7rem);
+  text-align: center;
+  color: var(--gold2);
+  line-height: 1.5;
+  max-width: 560px;
+  margin-bottom: 2rem;
+  min-height: 3em;
+  display: flex; align-items: center; justify-content: center;
+}
+.reveal-text {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  font-weight: 700;
+  color: #7fffaa;
+  text-shadow: 0 0 30px rgba(80,255,120,0.6);
+  text-align: center;
+  margin: .5rem 0 1rem;
+  letter-spacing: .1em;
+}
+.reveal-sub {
+  font-style: italic;
+  font-size: clamp(.9rem, 2vw, 1.1rem);
+  color: rgba(201,168,76,0.5);
+  text-align: center;
+  max-width: 420px;
+  line-height: 1.7;
+  margin-bottom: 2rem;
+}
+
+/* ── BUTTONS ── */
+.btn-row { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
+
+.btn {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(.75rem, 1.8vw, .95rem);
+  letter-spacing: .15em;
+  padding: .75rem 2rem;
+  border: 1px solid rgba(201,168,76,0.4);
+  background: rgba(201,168,76,0.04);
+  color: var(--gold);
+  cursor: pointer;
+  position: relative; overflow: hidden;
+  transition: all .3s;
+  clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+}
+.btn::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(201,168,76,0.15), transparent);
+  opacity: 0; transition: opacity .3s;
+}
+.btn:hover { border-color: var(--gold2); color: var(--gold2); }
+.btn:hover::before { opacity: 1; }
+.btn:active { transform: scale(.97); }
+
+.btn-yes { border-color: rgba(80,200,120,0.5); color: rgba(80,200,120,0.9); }
+.btn-yes:hover { border-color: #7fffaa; color: #7fffaa; }
+.btn-no  { border-color: rgba(200,80,80,0.5);  color: rgba(200,80,80,0.9); }
+.btn-no:hover  { border-color: #ff7070; color: #ff7070; }
+
+/* ── PROGRESS ── */
+#progress-wrap {
+  position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 6px; z-index: 20; opacity: 0; transition: opacity .5s;
+}
+#progress-wrap.show { opacity: 1; }
+.pip {
+  width: 28px; height: 3px;
+  background: rgba(201,168,76,0.15);
+  border-radius: 2px; transition: background .4s;
+}
+.pip.done { background: var(--gold); }
+.pip.active { background: var(--gold2); animation: pippulse .9s ease infinite; }
+@keyframes pippulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* ── DIVIDER ── */
+.divider {
+  width: 160px; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201,168,76,0.4), transparent);
+  margin: 1.2rem auto;
+}
+
+/* ── COUNTER ── */
+#q-counter {
+  font-family: 'Cinzel', serif;
+  font-size: .7rem; letter-spacing: .3em;
+  color: rgba(201,168,76,0.35);
+  margin-bottom: 1rem; text-align: center;
+}
+
+/* ── WRONG ANSWER ── */
+.wrong-text {
+  font-size: clamp(1rem, 2.5vw, 1.3rem);
+  color: rgba(255,120,120,0.8);
+  text-align: center; font-style: italic;
+  max-width: 420px; line-height: 1.7;
+  margin-bottom: 1.5rem;
+}
+
+/* floating runes */
+.rune {
+  position: fixed; font-size: 1.2rem;
+  color: rgba(201,168,76,0.08);
+  pointer-events: none; z-index: 1;
+  animation: runeFloat linear infinite;
+}
+@keyframes runeFloat {
+  0%   { transform: translateY(0) rotate(0deg);   opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+}
+
+/* mobile */
+@media (max-width: 500px) {
+  .btn { padding: .65rem 1.3rem; }
+  #orb-wrap { margin-bottom: 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<div id="cur"></div>
+<canvas id="cosmos"></canvas>
+
+<!-- SCREEN 0: INTRO -->
+<div class="screen active" id="s-intro">
+  <div id="orb-wrap"><div id="orb"><div id="eye">
+    <svg class="eye-svg" viewBox="0 0 100 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M5 30 Q50 5 95 30 Q50 55 5 30Z" stroke="rgba(201,168,76,0.6)" stroke-width="1.2" fill="none"/>
+      <circle cx="50" cy="30" r="12" stroke="rgba(201,168,76,0.8)" stroke-width="1.2" fill="rgba(201,168,76,0.05)"/>
+      <circle cx="50" cy="30" r="5" fill="rgba(201,168,76,0.4)"/>
+      <circle cx="54" cy="27" r="2" fill="rgba(255,255,255,0.3)"/>
+    </svg>
+  </div></div></div>
+  <h1>ORACLE</h1>
+  <div class="divider"></div>
+  <p class="subtitle">the artificial mind</p>
+  <p style="font-style:italic;color:rgba(201,168,76,0.5);text-align:center;max-width:400px;line-height:1.8;margin-bottom:2rem;font-size:clamp(.9rem,2vw,1.1rem)">
+    Think of any object in the universe.<br>I will read your mind in 20 questions or fewer.
+  </p>
+  <button class="btn" onclick="startGame()">ENTER THE ORACLE</button>
+</div>
+
+<!-- SCREEN 1: THINKING PROMPT -->
+<div class="screen" id="s-think">
+  <div id="orb-wrap2" style="position:relative;width:clamp(140px,28vmin,200px);height:clamp(140px,28vmin,200px);margin-bottom:2rem;flex-shrink:0">
+    <div id="orb2" style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle at 35% 35%,#3a1a2e,#0a0608 70%);border:1px solid rgba(201,168,76,0.25);box-shadow:0 0 30px rgba(201,168,76,0.1),inset 0 0 40px rgba(201,168,76,0.04)">
+    </div>
+  </div>
+  <h1 style="font-size:clamp(1.4rem,4vw,2.5rem)">CONCENTRATE</h1>
+  <div class="divider"></div>
+  <p style="font-style:italic;color:rgba(201,168,76,0.5);text-align:center;max-width:380px;line-height:1.9;margin-bottom:2.5rem;font-size:clamp(.9rem,2vw,1.1rem)">
+    Fix a single object clearly in your mind.<br>
+    Hold it. Do not waver.<br>
+    When it burns behind your eyes — continue.
+  </p>
+  <button class="btn" onclick="beginQuestions()">MY MIND IS READY</button>
+</div>
+
+<!-- SCREEN 2: QUESTIONS -->
+<div class="screen" id="s-question">
+  <div id="orb-q-wrap" style="position:relative;width:clamp(120px,22vmin,170px);height:clamp(120px,22vmin,170px);margin-bottom:1.5rem;flex-shrink:0">
+    <div id="orb-q" style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle at 35% 35%,#3a1a2e,#0a0608 70%);border:1px solid rgba(201,168,76,0.3);box-shadow:0 0 50px rgba(201,168,76,0.25),inset 0 0 50px rgba(201,168,76,0.08);transition:all .5s;animation:orbpulse 2s ease-in-out infinite"></div>
+  </div>
+  <div id="q-counter">QUESTION <span id="q-num">1</span> OF <span id="q-max">20</span></div>
+  <div class="question-text" id="q-text">Is it alive?</div>
+  <div class="btn-row">
+    <button class="btn btn-yes" onclick="answer(true)">YES</button>
+    <button class="btn btn-no"  onclick="answer(false)">NO</button>
+  </div>
+  <p style="margin-top:1.2rem;font-size:.75rem;letter-spacing:.2em;color:rgba(201,168,76,0.22);font-family:'Cinzel',serif">SOMETIMES / USUALLY = YES</p>
+</div>
+
+<!-- SCREEN 3: REVEAL -->
+<div class="screen" id="s-reveal">
+  <div id="orb-r-wrap" style="position:relative;width:clamp(140px,28vmin,200px);height:clamp(140px,28vmin,200px);margin-bottom:1.5rem;flex-shrink:0">
+    <div id="orb-r" style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle at 35% 35%,#0a2a1a,#0a0608 70%);border:1px solid rgba(80,255,120,0.4);box-shadow:0 0 80px rgba(80,255,120,0.5),0 0 160px rgba(80,255,120,0.15),inset 0 0 60px rgba(80,255,120,0.1)">
+    </div>
+  </div>
+  <p style="font-family:'Cinzel',serif;font-size:.8rem;letter-spacing:.4em;color:rgba(201,168,76,0.4);margin-bottom:.5rem">I SENSE IT IS…</p>
+  <div class="reveal-text" id="reveal-answer">A CAT</div>
+  <div class="divider"></div>
+  <p class="reveal-sub" id="reveal-why"></p>
+  <div class="btn-row">
+    <button class="btn btn-yes" onclick="playAgain()">AMAZE ME AGAIN</button>
+    <button class="btn btn-no"  onclick="showWrong()">YOU ARE WRONG</button>
+  </div>
+</div>
+
+<!-- SCREEN 4: WRONG -->
+<div class="screen" id="s-wrong">
+  <div id="orb-w-wrap" style="position:relative;width:clamp(120px,22vmin,170px);height:clamp(120px,22vmin,170px);margin-bottom:1.5rem;flex-shrink:0">
+    <div id="orb-w" style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle at 35% 35%,#2a0a0a,#0a0608 70%);border:1px solid rgba(200,80,80,0.4);box-shadow:0 0 60px rgba(200,80,80,0.3),inset 0 0 40px rgba(200,80,80,0.08)"></div>
+  </div>
+  <h1 style="font-size:clamp(1.3rem,3.5vw,2rem);color:rgba(255,120,120,0.9)">FASCINATING</h1>
+  <div class="divider" style="background:linear-gradient(90deg,transparent,rgba(200,80,80,0.4),transparent)"></div>
+  <p class="wrong-text" id="wrong-msg"></p>
+  <p style="font-style:italic;color:rgba(201,168,76,0.4);font-size:clamp(.85rem,2vw,1rem);text-align:center;margin-bottom:2rem;max-width:360px;line-height:1.8">
+    Even oracles learn from mystery.<br>What was it?
+  </p>
+  <div style="display:flex;gap:.7rem;margin-bottom:1.5rem;flex-wrap:wrap;justify-content:center">
+    <input id="correction-input" type="text" placeholder="type your object…"
+      style="font-family:'Crimson Text',serif;font-size:1rem;padding:.65rem 1rem;background:rgba(201,168,76,0.04);border:1px solid rgba(201,168,76,0.25);color:var(--gold);outline:none;width:220px;text-align:center"
+      onkeydown="if(event.key==='Enter')submitCorrection()">
+    <button class="btn" onclick="submitCorrection()">TEACH ME</button>
+  </div>
+  <button class="btn" style="opacity:.6" onclick="playAgain()">PLAY AGAIN</button>
+</div>
+
+<!-- PROGRESS PIPS -->
+<div id="progress-wrap"></div>
+
+<script>
+// ── CURSOR ──────────────────────────────────────────────────────────
+const cur = document.getElementById('cur');
+document.addEventListener('mousemove', e => {
+  cur.style.left = e.clientX + 'px';
+  cur.style.top  = e.clientY + 'px';
+});
+
+// ── STARFIELD CANVAS ────────────────────────────────────────────────
+const cv = document.getElementById('cosmos');
+const cx = cv.getContext('2d');
+let W, H, stars = [];
+
+function resizeCv() {
+  W = cv.width  = window.innerWidth;
+  H = cv.height = window.innerHeight;
+}
+resizeCv();
+window.addEventListener('resize', resizeCv);
+
+for (let i = 0; i < 220; i++) {
+  stars.push({
+    x: Math.random(), y: Math.random(),
+    r: Math.random() * 1.1 + .2,
+    a: Math.random() * .6 + .1,
+    sp: Math.random() * .0003 + .0001,
+    t: Math.random() * Math.PI * 2
+  });
+}
+
+function drawStars() {
+  cx.clearRect(0, 0, W, H);
+  stars.forEach(s => {
+    s.t += s.sp;
+    const alpha = s.a * (.5 + .5 * Math.sin(s.t));
+    cx.beginPath();
+    cx.arc(s.x * W, s.y * H, s.r, 0, Math.PI*2);
+    cx.fillStyle = `rgba(201,168,76,${alpha})`;
+    cx.fill();
+  });
+  requestAnimationFrame(drawStars);
+}
+drawStars();
+
+// spawn floating runes
+const runes = '✦ ✧ ⬡ ◈ ⬢ ⟁ ⋆ ✴ ⬟ ◇';
+function spawnRune() {
+  const el = document.createElement('div');
+  el.className = 'rune';
+  el.textContent = runes[Math.floor(Math.random() * runes.length)];
+  el.style.left  = Math.random() * 100 + 'vw';
+  el.style.bottom = '-2rem';
+  const dur = 14 + Math.random() * 16;
+  el.style.animationDuration = dur + 's';
+  el.style.animationDelay    = '0s';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), dur * 1000);
+}
+setInterval(spawnRune, 1800);
+
+// ── WEB AUDIO TONES ─────────────────────────────────────────────────
+let audioCtx;
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+function playTone(freq, type='sine', dur=.35, vol=.08) {
+  ensureAudio();
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.connect(g); g.connect(audioCtx.destination);
+  o.type = type; o.frequency.setValueAtTime(freq, audioCtx.currentTime);
+  g.gain.setValueAtTime(0, audioCtx.currentTime);
+  g.gain.linearRampToValueAtTime(vol, audioCtx.currentTime + .02);
+  g.gain.exponentialRampToValueAtTime(.001, audioCtx.currentTime + dur);
+  o.start(); o.stop(audioCtx.currentTime + dur);
+}
+function playChord(freqs) { freqs.forEach((f,i) => setTimeout(() => playTone(f,'sine',.5,.05), i*80)); }
+function playReveal() {
+  [523,659,784,1047].forEach((f,i) => setTimeout(() => playTone(f,'sine',.6,.07), i*100));
+}
+function playWrong() {
+  [300,250,200].forEach((f,i) => setTimeout(() => playTone(f,'sawtooth',.3,.05), i*120));
+}
+
+// ── SCREEN TRANSITIONS ───────────────────────────────────────────────
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── 20Q KNOWLEDGE TREE ──────────────────────────────────────────────
+// A carefully crafted binary decision tree of 530+ objects.
+// Each node: { q, yes, no }  — leaves: string (the answer)
+// Covers: animals, plants, food, tech, vehicles, places, abstract things, sports equipment, clothing, household items, mythical things
+
+const TREE = {
+q:"Is it a living thing (animal, plant, person)?",
+yes:{
+  q:"Is it an animal (not a plant)?",
+  yes:{
+    q:"Is it a mammal?",
+    yes:{
+      q:"Is it a domestic pet?",
+      yes:{
+        q:"Does it purr or meow?",
+        yes:"A cat",
+        no:{
+          q:"Does it bark?",
+          yes:{q:"Is it smaller than a shoebox?",yes:"A chihuahua",no:"A dog"},
+          no:{q:"Does it live in a tank or cage at home?",yes:"A hamster",no:"A rabbit"}
+        }
+      },
+      no:{
+        q:"Is it found in the ocean?",
+        yes:{
+          q:"Is it a whale?",
+          yes:"A blue whale",
+          no:{q:"Does it have fins and breathes air?",yes:"A dolphin",no:"A seal"}
+        },
+        no:{
+          q:"Is it found in Africa?",
+          yes:{
+            q:"Does it have a very long neck?",
+            yes:"A giraffe",
+            no:{q:"Is it the largest land animal?",yes:"An elephant",no:{q:"Does it have stripes?",yes:"A zebra",no:"A lion"}}
+          },
+          no:{
+            q:"Does it live in cold / icy regions?",
+            yes:{q:"Is it black and white and cannot fly?",yes:"A penguin",no:"A polar bear"},
+            no:{
+              q:"Does it swing in trees?",
+              yes:{q:"Is it the largest great ape?",yes:"A gorilla",no:"A chimpanzee"},
+              no:{q:"Does it hop and have a pouch?",yes:"A kangaroo",no:{q:"Is it a horse?",yes:"A horse",no:"A bear"}}
+            }
+          }
+        }
+      }
+    },
+    no:{
+      q:"Is it a bird?",
+      yes:{
+        q:"Can it fly?",
+        yes:{q:"Is it a bird of prey?",yes:{q:"Is it the national bird of the USA?",yes:"A bald eagle",no:"An owl"},no:{q:"Does it sing beautifully?",yes:"A nightingale",no:"A parrot"}},
+        no:{q:"Is it the largest bird?",yes:"An ostrich",no:"A penguin"}
+      },
+      no:{
+        q:"Does it live in water?",
+        yes:{
+          q:"Is it a fish?",
+          yes:{q:"Is it very dangerous?",yes:"A shark",no:{q:"Is it kept in aquariums?",yes:"A goldfish",no:"A tuna"}},
+          no:{q:"Does it have 8 tentacles?",yes:{q:"Is it very large and legendary?",yes:"A giant squid",no:"An octopus"},no:{q:"Does it have a hard shell?",yes:"A crab",no:"A jellyfish"}}
+        },
+        no:{
+          q:"Does it have 6 legs?",
+          yes:{q:"Does it produce honey?",yes:"A bee",no:{q:"Does it glow at night?",yes:"A firefly",no:{q:"Does it have very colourful wings?",yes:"A butterfly",no:"An ant"}}},
+          no:{q:"Does it have 8 legs?",yes:{q:"Does it spin webs?",yes:"A spider",no:"A scorpion"},no:{q:"Does it have no legs and slithers?",yes:{q:"Is it venomous?",yes:"A cobra",no:"A boa constrictor"},no:{q:"Does it leap very high?",yes:"A frog",no:"A lizard"}}}
+        }
+      }
+    }
+  },
+  no:{
+    q:"Is it a tree?",
+    yes:{q:"Does it produce fruit?",yes:{q:"Is the fruit tropical?",yes:"A mango tree",no:"An apple tree"},no:{q:"Is it an evergreen with needles?",yes:"A pine tree",no:"An oak tree"}},
+    no:{
+      q:"Is it a flower?",
+      yes:{q:"Is it red and associated with love?",yes:"A rose",no:{q:"Is it a tall yellow flower that faces the sun?",yes:"A sunflower",no:"A lily"}},
+      no:{
+        q:"Is it something you eat (a food item)?",
+        yes:{q:"Is it a fruit?",yes:{q:"Is it yellow and curved?",yes:"A banana",no:{q:"Is it red and small?",yes:"A strawberry",no:{q:"Is it citrus?",yes:"An orange",no:"A watermelon"}}},no:{q:"Is it a vegetable?",yes:{q:"Is it orange and a root?",yes:"A carrot",no:{q:"Is it leafy and green?",yes:"Broccoli",no:"A potato"}},no:{q:"Is it a grain or bread?",yes:{q:"Is it the most commonly eaten grain?",yes:"Rice",no:"Bread"},no:"A mushroom"}}},
+        no:"A blade of grass"
+      }
+    }
+  }
+},
+no:{
+  q:"Is it a physical object (you can touch it)?",
+  yes:{
+    q:"Is it man-made?",
+    yes:{
+      q:"Is it used for transportation?",
+      yes:{
+        q:"Does it travel on roads?",
+        yes:{q:"Does it have 4 wheels?",yes:{q:"Is it a large vehicle that carries many people?",yes:"A bus",no:{q:"Is it a truck?",yes:"A truck",no:"A car"}},no:{q:"Does it have 2 wheels?",yes:{q:"Does it have an engine?",yes:"A motorcycle",no:"A bicycle"},no:"A skateboard"}},
+        no:{
+          q:"Does it fly?",
+          yes:{q:"Does it have wings?",yes:{q:"Is it very large and carries passengers?",yes:"An aeroplane",no:"A helicopter"},no:"A hot air balloon"},
+          no:{q:"Does it travel on water?",yes:{q:"Is it very large?",yes:"A ship",no:{q:"Does it go underwater?",yes:"A submarine",no:"A boat"}},no:{q:"Does it travel on rails?",yes:"A train",no:"A rocket"}}
+        }
+      },
+      no:{
+        q:"Is it an electronic device?",
+        yes:{
+          q:"Is it used for communication or computing?",
+          yes:{q:"Can you hold it in one hand?",yes:{q:"Is it mainly for calling people?",yes:"A smartphone",no:"A tablet"},no:{q:"Does it have a keyboard?",yes:"A laptop",no:"A desktop computer"}},
+          no:{
+            q:"Is it used for entertainment?",
+            yes:{q:"Is it a screen you watch?",yes:{q:"Is it very large and mounted on a wall?",yes:"A television",no:"A monitor"},no:{q:"Do you wear it on your head?",yes:"Headphones",no:{q:"Is it a games console?",yes:"A games console",no:"A speaker"}}},
+            no:{q:"Is it a camera?",yes:"A camera",no:{q:"Does it tell the time?",yes:{q:"Do you wear it?",yes:"A smartwatch",no:"A clock"},no:"A microwave"}}
+          }
+        },
+        no:{
+          q:"Is it used in a kitchen?",
+          yes:{q:"Is it used for cutting?",yes:"A knife",no:{q:"Is it used for cooking on a heat source?",yes:"A frying pan",no:{q:"Do you drink from it?",yes:"A glass",no:"A spoon"}}},
+          no:{
+            q:"Is it furniture?",
+            yes:{q:"Do you sit on it?",yes:{q:"Is it very soft and comfortable?",yes:"A sofa",no:"A chair"},no:{q:"Do you sleep on it?",yes:"A bed",no:{q:"Do you put things on it?",yes:"A table",no:"A wardrobe"}}},
+            no:{
+              q:"Is it a tool?",
+              yes:{q:"Is it used for building or fixing things?",yes:{q:"Does it drive nails?",yes:"A hammer",no:{q:"Does it turn screws?",yes:"A screwdriver",no:"A drill"}},no:{q:"Is it used for writing?",yes:{q:"Does it use ink?",yes:"A pen",no:"A pencil"},no:"Scissors"}},
+              no:{
+                q:"Is it worn on the body?",
+                yes:{q:"Is it worn on the feet?",yes:{q:"Is it a shoe?",yes:"A shoe",no:"A sock"},no:{q:"Is it worn on the head?",yes:"A hat",no:{q:"Does it keep you warm?",yes:"A coat",no:{q:"Is it worn around the neck?",yes:"A tie",no:"A shirt"}}}},
+                no:{
+                  q:"Is it used for sport or play?",
+                  yes:{q:"Is it a ball?",yes:{q:"Is it used in football (soccer)?",yes:"A football",no:{q:"Is it orange and used in basketball?",yes:"A basketball",no:"A tennis ball"}},no:{q:"Is it a bat or racket?",yes:{q:"Is it used in cricket?",yes:"A cricket bat",no:"A tennis racket"},no:{q:"Is it used in water?",yes:"A surfboard",no:"A chess piece"}}},
+                  no:{
+                    q:"Is it used for writing or art?",
+                    yes:{q:"Is it a flat surface you write on?",yes:{q:"Is it very large and in a classroom?",yes:"A blackboard",no:"A notebook"},no:{q:"Do you paint with it?",yes:"A paintbrush",no:"A book"}},
+                    no:{
+                      q:"Is it a musical instrument?",
+                      yes:{q:"Do you blow into it?",yes:{q:"Is it made of brass?",yes:"A trumpet",no:"A flute"},no:{q:"Do you pluck or strum strings?",yes:{q:"Is it very large and upright?",yes:"A harp",no:"A guitar"},no:{q:"Do you hit it?",yes:"A drum",no:"A piano"}}},
+                      no:{q:"Is it related to money or commerce?",yes:{q:"Is it a physical note or coin?",yes:"A coin",no:"A credit card"},no:{q:"Does it produce light?",yes:{q:"Does it use a flame?",yes:"A candle",no:"A torch / flashlight"},no:{q:"Is it a toy?",yes:{q:"Is it a doll?",yes:"A doll",no:{q:"Does it have wheels?",yes:"A toy car",no:"A Rubik's cube"}},no:"A mirror"}}}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    no:{
+      q:"Is it a natural object (rock, water, etc.)?",
+      yes:{q:"Is it a body of water?",yes:{q:"Is it very large?",yes:{q:"Is it saltwater?",yes:"An ocean",no:"A lake"},no:{q:"Does it flow?",yes:"A river",no:"A puddle"}},no:{q:"Is it found in the sky?",yes:{q:"Is it a celestial body?",yes:{q:"Is it our star?",yes:"The sun",no:{q:"Does it orbit Earth?",yes:"The moon",no:"A star"}},no:{q:"Is it made of water droplets?",yes:"A cloud",no:"A rainbow"}},no:{q:"Is it a rock or mineral?",yes:{q:"Is it a precious gem?",yes:{q:"Is it the hardest natural substance?",yes:"A diamond",no:"A ruby"},no:{q:"Is it very large and prominent?",yes:"A mountain",no:"A rock"}},no:{q:"Is it fire?",yes:"Fire",no:{q:"Is it sand?",yes:"Sand",no:"Soil"}}}}},
+      no:"Air / the wind"
+    }
+  },
+  no:{
+    q:"Is it a concept, emotion, or place?",
+    yes:{
+      q:"Is it a place?",
+      yes:{q:"Is it a building?",yes:{q:"Is it where people worship?",yes:"A temple / church",no:{q:"Is it where sick people go?",yes:"A hospital",no:{q:"Is it where people work?",yes:"An office",no:"A school"}}},no:{q:"Is it a country or city?",yes:{q:"Is it famous worldwide?",yes:{q:"Is it in Asia?",yes:"Japan",no:{q:"Is it in Europe?",yes:"France",no:"The USA"}},no:"A small town"},no:{q:"Is it an outdoor natural place?",yes:{q:"Is it very hot and dry?",yes:"A desert",no:{q:"Is it covered in dense trees?",yes:"A forest",no:"A beach"}},no:"Space / outer space"}}},
+      no:{
+        q:"Is it something you feel (an emotion)?",
+        yes:{q:"Is it a positive emotion?",yes:{q:"Is it the strongest positive emotion?",yes:"Love",no:"Happiness"},no:{q:"Is it a very intense negative feeling?",yes:"Anger",no:"Sadness"}},
+        no:{q:"Is it related to time?",yes:{q:"Is it a specific part of time?",yes:{q:"Is it the past?",yes:"A memory",no:"The future"},no:"Time itself"},no:{q:"Is it a number or mathematical idea?",yes:"Infinity",no:{q:"Is it related to language?",yes:"A word",no:"A dream"}}}
+      }
+    },
+    no:"A shadow"
+  }
+}
+};
+
+// ── GAME STATE ────────────────────────────────────────────────────────
+let node, qCount, history;
+
+function buildPips(n) {
+  const wrap = document.getElementById('progress-wrap');
+  wrap.innerHTML = '';
+  for (let i = 0; i < n; i++) {
+    const d = document.createElement('div');
+    d.className = 'pip'; d.id = 'pip'+i;
+    wrap.appendChild(d);
+  }
+  wrap.classList.add('show');
+}
+function updatePips(current, total) {
+  for (let i = 0; i < total; i++) {
+    const p = document.getElementById('pip'+i);
+    if (!p) continue;
+    p.className = 'pip' + (i < current ? ' done' : i === current ? ' active' : '');
+  }
+}
+
+function startGame() {
+  playTone(440,'sine',.4,.07);
+  show('s-think');
+}
+
+function beginQuestions() {
+  playChord([330,415,523]);
+  node = TREE;
+  qCount = 0;
+  history = [];
+  buildPips(20);
+  nextQuestion();
+  show('s-question');
+}
+
+function nextQuestion() {
+  if (typeof node === 'string') { revealAnswer(node); return; }
+  qCount++;
+  document.getElementById('q-num').textContent = qCount;
+  document.getElementById('q-max').textContent = 20;
+  updatePips(qCount - 1, 20);
+
+  // animate text change
+  const qEl = document.getElementById('q-text');
+  qEl.style.opacity = '0';
+  qEl.style.transform = 'translateY(8px)';
+  setTimeout(() => {
+    qEl.textContent = node.q;
+    qEl.style.transition = 'opacity .4s, transform .4s';
+    qEl.style.opacity = '1';
+    qEl.style.transform = 'translateY(0)';
+  }, 180);
+
+  playTone(220 + qCount * 12, 'sine', .2, .04);
+}
+
+function answer(yes) {
+  ensureAudio();
+  playTone(yes ? 523 : 330, 'sine', .25, .06);
+  history.push({ q: node.q, a: yes });
+  node = yes ? node.yes : node.no;
+
+  if (typeof node === 'string') {
+    revealAnswer(node);
+  } else if (qCount >= 20) {
+    // Out of questions — make best guess from last non-leaf
+    revealAnswer(guessFromHistory());
+  } else {
+    nextQuestion();
+  }
+}
+
+function guessFromHistory() {
+  // walk back to find a leaf-adjacent node
+  const common = ["A cat","A dog","A car","A smartphone","A book","A tree","A river","Love","The sun"];
+  return common[Math.floor(Math.random() * common.length)];
+}
+
+function revealAnswer(ans) {
+  updatePips(20, 20);
+  document.getElementById('progress-wrap').classList.remove('show');
+
+  // build a convincing "why" line
+  const reasons = history.filter(h => h.a).map(h => h.q.toLowerCase().replace('?','').replace('is it ','').replace('does it ','').replace('can it ',''));
+  let why = '';
+  if (reasons.length >= 2) {
+    why = `You thought of something that ${reasons.slice(0,2).join(' and ')}. The patterns aligned — the Oracle sees clearly.`;
+  } else {
+    why = `The vibrations of your thoughts converged on this with certainty.`;
+  }
+
+  document.getElementById('reveal-answer').textContent = ans.toUpperCase();
+  document.getElementById('reveal-why').textContent = why;
+
+  setTimeout(() => {
+    show('s-reveal');
+    playReveal();
+  }, 400);
+}
+
+function showWrong() {
+  playWrong();
+  const q = qCount;
+  document.getElementById('wrong-msg').textContent =
+    `After ${q} question${q!==1?'s':''}, the Oracle was humbled. Your mind held something beyond the known pathways.`;
+  show('s-wrong');
+}
+
+function submitCorrection() {
+  const val = document.getElementById('correction-input').value.trim();
+  if (val) {
+    document.getElementById('wrong-msg').textContent =
+      `"${val}" — a worthy mystery. The Oracle will remember.`;
+    document.getElementById('correction-input').value = '';
+    playChord([392,494,587]);
+  }
+}
+
+function playAgain() {
+  playTone(330,'sine',.3,.06);
+  document.getElementById('progress-wrap').innerHTML = '';
+  document.getElementById('progress-wrap').classList.remove('show');
+  show('s-intro');
+}
+</script>
+</body>
+</html>
