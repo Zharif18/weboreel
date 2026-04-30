@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>COSMOS — You Are God</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --gold:#c9a84c;--gold2:#f5d78e;--white:#f0ede6;
+  --dim:rgba(240,237,230,0.5);--faint:rgba(240,237,230,0.12);
+  --bg:#000005;
+}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);}
+body{font-family:'Cormorant Garamond',serif;color:var(--white);cursor:none;touch-action:none;}
+
+#cursor{position:fixed;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);}
+#cursor-ring{width:36px;height:36px;border:1px solid rgba(201,168,76,0.7);border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+#cursor-dot{width:5px;height:5px;background:var(--gold);border-radius:50%;box-shadow:0 0 10px var(--gold),0 0 20px rgba(201,168,76,0.5);}
+
+#cosmos{position:fixed;inset:0;width:100%;height:100%;}
+
+/* INTRO */
+#intro{position:fixed;inset:0;z-index:100;background:radial-gradient(ellipse at center,#04020f 0%,#000005 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 1.5s ease;}
+#intro.fade{opacity:0;pointer-events:none;}
+.intro-title{font-family:'Cinzel Decorative',serif;font-size:clamp(2.5rem,8vw,7rem);font-weight:900;letter-spacing:.1em;color:var(--white);text-align:center;line-height:1;animation:titleGlow 3s ease-in-out infinite;}
+@keyframes titleGlow{0%,100%{text-shadow:0 0 60px rgba(201,168,76,0.4),0 0 120px rgba(201,168,76,0.15);}50%{text-shadow:0 0 100px rgba(201,168,76,0.8),0 0 200px rgba(201,168,76,0.4),0 0 300px rgba(201,168,76,0.15);}}
+.intro-sub{font-style:italic;font-size:clamp(1rem,2.5vw,1.6rem);color:var(--dim);letter-spacing:.3em;margin:1.5rem 0 2rem;text-align:center;}
+.intro-powers{display:flex;gap:1rem;margin-bottom:2.5rem;flex-wrap:wrap;justify-content:center;max-width:700px;}
+.power-pill{font-size:clamp(.55rem,1vw,.7rem);letter-spacing:.2em;padding:.35rem .9rem;border:1px solid var(--faint);color:var(--dim);border-radius:100px;}
+.intro-begin{font-family:'Cinzel Decorative',serif;font-size:clamp(.7rem,1.5vw,1rem);letter-spacing:.4em;padding:1rem 3rem;border:1px solid rgba(201,168,76,0.5);background:transparent;color:var(--gold);cursor:none;position:relative;overflow:hidden;transition:all .4s;}
+.intro-begin::before{content:'';position:absolute;inset:0;background:var(--gold);transform:translateX(-101%);transition:transform .4s cubic-bezier(.77,0,.18,1);z-index:-1;}
+.intro-begin:hover::before{transform:translateX(0);}
+.intro-begin:hover{color:#000;}
+
+/* TUTORIAL */
+#tutorial{position:fixed;inset:0;z-index:150;background:rgba(0,0,5,.95);display:none;flex-direction:column;align-items:center;justify-content:center;padding:2rem;overflow-y:auto;}
+#tutorial.show{display:flex;}
+.tutorial-title{font-family:'Cinzel Decorative',serif;font-size:clamp(1.5rem,4vw,2.5rem);color:var(--gold);letter-spacing:.15em;margin-bottom:2rem;text-align:center;}
+.tutorial-section{margin-bottom:2rem;max-width:600px;}
+.tutorial-section-title{font-family:'Cinzel Decorative',serif;font-size:clamp(.9rem,1.5vw,1.1rem);color:var(--gold2);letter-spacing:.2em;margin-bottom:.8rem;border-bottom:1px solid rgba(201,168,76,.2);padding-bottom:.3rem;}
+.tutorial-step{display:flex;align-items:flex-start;gap:1rem;margin-bottom:1rem;}
+.tutorial-icon{font-size:1.3rem;min-width:30px;}
+.tutorial-text{font-size:clamp(.8rem,1.2vw,1rem);color:var(--dim);line-height:1.6;}
+.tutorial-text strong{color:var(--white);}
+.tutorial-skip{font-size:.7rem;color:var(--dim);letter-spacing:.2em;margin-top:1.5rem;cursor:pointer;transition:color .2s;}
+.tutorial-skip:hover{color:var(--gold);}
+.tutorial-btn{font-family:'Cinzel Decorative',serif;font-size:clamp(.7rem,1.2vw,.9rem);letter-spacing:.3em;padding:.8rem 2.5rem;border:1px solid rgba(201,168,76,.5);background:transparent;color:var(--gold);cursor:none;margin-top:1.5rem;transition:all .3s;}
+.tutorial-btn:hover{background:var(--gold);color:#000;}
+
+/* HUD */
+#hud{position:fixed;top:0;left:0;right:0;z-index:50;padding:.8rem 1.5rem;display:none;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;background:linear-gradient(to bottom,rgba(0,0,5,.92),transparent);pointer-events:none;}
+#hud.show{display:flex;}
+.hud-title{font-family:'Cinzel Decorative',serif;font-size:clamp(.75rem,1.4vw,1rem);letter-spacing:.2em;color:var(--gold);text-shadow:0 0 20px rgba(201,168,76,0.5);}
+.hud-stats{display:flex;gap:1.2rem;flex-wrap:wrap;align-items:center;}
+.hud-stat{display:flex;flex-direction:column;align-items:center;gap:1px;}
+.hud-stat-val{font-family:'Cinzel Decorative',serif;font-size:clamp(.9rem,1.8vw,1.3rem);color:var(--gold2);}
+.hud-stat-label{font-size:.5rem;letter-spacing:.3em;color:var(--dim);text-transform:uppercase;}
+
+/* TIME CONTROLS */
+#timectrl{position:fixed;bottom:2rem;right:1.5rem;z-index:51;display:none;align-items:center;gap:.5rem;pointer-events:all;}
+#timectrl.show{display:flex;}
+.tc-btn{width:32px;height:32px;border-radius:50%;border:1px solid rgba(201,168,76,0.3);background:rgba(0,0,5,.8);display:flex;align-items:center;justify-content:center;font-size:.8rem;cursor:none;transition:all .2s;backdrop-filter:blur(4px);color:var(--gold);}
+.tc-btn:hover{border-color:var(--gold);box-shadow:0 0 12px rgba(201,168,76,0.4);}
+.tc-btn.active{border-color:var(--gold);background:rgba(201,168,76,.15);}
+#speed-label{font-size:.6rem;letter-spacing:.2em;color:var(--dim);font-family:'Cormorant Garamond',serif;}
+
+/* TOOLS */
+#tools{position:fixed;left:1.2rem;top:50%;transform:translateY(-50%);z-index:50;display:none;flex-direction:column;gap:.5rem;pointer-events:all;}
+
+/* Prevent inspect panel from overlapping tools */
+#inspect{margin-top:40px;}
+
+/* Prevent eventlog from overlapping power meter */
+#eventlog{margin-bottom:70px;}
+
+/* Prevent power meter from overlapping tools */
+#power-wrap{margin-bottom:100px;}
+
+/* Responsive adjustments for small screens */
+@media (max-width: 700px) {
+  #tools { left: 0.2rem; }
+  #inspect { right: 0.2rem; min-width: 120px; padding: 0.5rem; }
+  #eventlog { right: 0.2rem; max-width: 160px; }
+  #power-wrap { left: 50%; transform: translateX(-50%); margin-bottom: 60px; }
+  #timectrl { right: 0.2rem; bottom: 0.5rem; top: auto; }
+  #hud { padding: .5rem .5rem; }
+}
+#tools.show{display:flex;}
+.tool-btn{width:46px;height:46px;border-radius:50%;border:1px solid rgba(201,168,76,0.25);background:rgba(0,0,5,.85);display:flex;align-items:center;justify-content:center;font-size:1.2rem;cursor:none;transition:all .2s;position:relative;backdrop-filter:blur(4px);}
+.tool-btn:hover,.tool-btn.active{border-color:var(--gold);box-shadow:0 0 18px rgba(201,168,76,0.45);}
+.tool-btn .tool-tip{position:absolute;left:calc(100% + .8rem);white-space:nowrap;font-size:.58rem;letter-spacing:.2em;color:var(--gold);background:rgba(0,0,5,.95);border:1px solid rgba(201,168,76,.2);padding:.3rem .7rem;opacity:0;transition:opacity .2s;pointer-events:none;z-index:10;}
+.tool-btn:hover .tool-tip{opacity:1;}
+.tool-key{position:absolute;bottom:2px;right:4px;font-size:.45rem;color:var(--dim);font-family:'Cormorant Garamond',serif;}
+
+/* POWER METER */
+#power-wrap{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);z-index:50;display:none;align-items:center;gap:.8rem;pointer-events:none;}
+#power-wrap.show{display:flex;}
+.power-label{font-size:.58rem;letter-spacing:.3em;color:var(--dim);}
+#power-track{width:180px;height:3px;background:rgba(240,237,230,0.1);border-radius:99px;overflow:hidden;}
+#power-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2),#fff);border-radius:99px;width:0%;transition:width .05s;}
+
+/* EVENT LOG */
+#eventlog{position:fixed;bottom:2rem;right:1.5rem;z-index:50;max-width:280px;display:none;flex-direction:column;gap:.35rem;pointer-events:none;}
+#eventlog.show{display:flex;}
+.event-item{font-style:italic;font-size:.72rem;color:var(--dim);padding:.3rem .8rem;border-left:1px solid rgba(201,168,76,.35);animation:eventIn .4s ease;background:rgba(0,0,5,.7);}
+@keyframes eventIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:none;}}
+
+/* GOD VOICE */
+#godvoice{position:fixed;top:42%;left:50%;transform:translate(-50%,-50%);z-index:200;text-align:center;pointer-events:none;font-family:'Cinzel Decorative',serif;font-size:clamp(1.2rem,3.5vw,2.5rem);color:var(--gold);text-shadow:0 0 40px rgba(201,168,76,.9),0 0 80px rgba(201,168,76,.4);opacity:0;transition:opacity .6s;letter-spacing:.1em;}
+#godvoice.show{opacity:1;}
+
+/* INSPECT PANEL */
+#inspect{position:fixed;right:1.5rem;top:50%;transform:translateY(-50%);z-index:50;display:none;flex-direction:column;gap:.4rem;background:rgba(0,0,5,.9);border:1px solid rgba(201,168,76,.2);padding:1rem;min-width:180px;backdrop-filter:blur(8px);pointer-events:all;}
+#inspect.show{display:flex;}
+.inspect-title{font-family:'Cinzel Decorative',serif;font-size:.7rem;letter-spacing:.2em;color:var(--gold);margin-bottom:.4rem;border-bottom:1px solid rgba(201,168,76,.15);padding-bottom:.4rem;}
+.inspect-row{display:flex;justify-content:space-between;gap:.8rem;font-size:.65rem;}
+.inspect-key{color:var(--dim);}
+.inspect-val{color:var(--white);font-family:'Cinzel Decorative',serif;font-size:.65rem;}
+.inspect-close{font-size:.55rem;letter-spacing:.2em;color:var(--dim);cursor:none;margin-top:.6rem;text-align:center;border:1px solid var(--faint);padding:.2rem;transition:color .2s;}
+.inspect-close:hover{color:var(--gold);}
+
+/* MINIMAP - Disabled */
+/* #minimap{display:none;} */
+
+/* SCREENSHOT FLASH */
+#ss-flash{position:fixed;inset:0;background:#fff;z-index:500;opacity:0;pointer-events:none;transition:opacity .1s;}
+
+/* HINT */
+#hint{position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);z-index:50;font-size:.58rem;letter-spacing:.35em;color:var(--dim);display:none;text-align:center;pointer-events:none;}
+#hint.show{display:block;}
+
+/* WORMHOLE PORTAL */
+.portal-ring{position:absolute;border-radius:50%;border:2px solid;animation:portalSpin 3s linear infinite;}
+@keyframes portalSpin{to{transform:rotate(360deg);}}
+
+/* ACHIEVEMENT TOAST */
+#achievement{position:fixed;top:5rem;left:50%;transform:translateX(-50%) translateY(-20px);z-index:300;background:rgba(0,0,5,.95);border:1px solid var(--gold);padding:.6rem 1.5rem;text-align:center;opacity:0;transition:all .4s;pointer-events:none;}
+#achievement.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.ach-title{font-family:'Cinzel Decorative',serif;font-size:.65rem;letter-spacing:.3em;color:var(--gold);}
+.ach-sub{font-size:.6rem;color:var(--dim);margin-top:.2rem;}
+</style>
+</head>
+<body>
+
+<div id="cursor"><div id="cursor-ring"><div id="cursor-dot"></div></div></div>
+<canvas id="cosmos"></canvas>
+<div id="ss-flash"></div>
+
+<!-- INTRO -->
+<div id="intro">
+  <div class="intro-title">COSMOS</div>
+  <div class="intro-sub">you are the architect of everything</div>
+  <div class="intro-powers">
+    <div class="power-pill">✦ BIRTH STARS</div>
+    <div class="power-pill">✦ FORGE PLANETS</div>
+    <div class="power-pill">✦ SPARK CIVILIZATIONS</div>
+    <div class="power-pill">✦ SUMMON BLACK HOLES</div>
+    <div class="power-pill">✦ OPEN WORMHOLES</div>
+    <div class="power-pill">✦ LAUNCH COMETS</div>
+    <div class="power-pill">✦ CONTROL TIME</div>
+    <div class="power-pill">✦ END WORLDS</div>
+  </div>
+  <button class="intro-begin" onclick="beginCreation()">LET THERE BE LIGHT</button>
+</div>
+
+<!-- TUTORIAL -->
+<div id="tutorial">
+  <div class="tutorial-title">✦ HOW TO CREATE ✦</div>
+  
+  <div class="tutorial-section">
+    <div class="tutorial-section-title">CREATING CELESTIAL BODIES</div>
+    <div class="tutorial-step">
+      <span class="tutorial-icon">⭐</span>
+      <div class="tutorial-text"><strong>Birth Star (Press 1)</strong> — Hold mouse button to charge power, then release to create a new star. The longer you hold, the bigger the star.</div>
+    </div>
+    <div class="tutorial-step">
+      <span class="tutorial-icon">🪐</span>
+      <div class="tutorial-text"><strong>Forge Planet (Press 2)</strong> — Click near an existing star to create a planet orbiting it.</div>
+    </div>
+    <div class="tutorial-step">
+      <span class="tutorial-icon">🌱</span>
+      <div class="tutorial-text"><strong>Spark Life (Press 3)</strong> — Click on a planet to ignite life. Watch civilizations emerge!</div>
+    </div>
+  </div>
+  
+  <div class="tutorial-section">
+    <div class="tutorial-section-title">COSMIC PHENOMENA</div>
+    <div class="tutorial-step">
+      <span class="tutorial-icon">🕳️</span>
+      <div class="tutorial-text"><strong>Black Hole (Press 4)</strong> — Hold and release to create a gravity-devouring black hole.</div>
+    </div>
+    <div class="tutorial-step">
+      <span class="tutorial-icon">☄️</span>
+      <div class="tutorial-text"><strong>Comet (Press 5)</strong> — Click and drag to launch a comet across the cosmos.</div>
+    </div>
+    <div class="tutorial-step">
+      <span class="tutorial-icon">🌀</span>
+      <div class="tutorial-text"><strong>Wormhole (Press 6)</strong> — Click twice to create a portal between two points in space.</div>
+    </div>
+    <div class="tutorial-step">
+      <span class="tutorial-icon">🌌</span>
+      <div class="tutorial-text"><strong>Nebula (Press 7)</strong> — Click and drag to paint beautiful nebulae.</div>
+    </div>
+  </div>
+  
+  <div class="tutorial-section">
+    <div class="tutorial-section-title">DESTRUCTION & DISCOVERY</div>
+    <div class="tutorial-step">
+      <span class="tutorial-icon">💫</span>
+      <div class="tutorial-text"><strong>Supernova (Press 8)</strong> — Click on a star to trigger a spectacular explosion.</div>
+    </div>
+    <div class="tutorial-step">
+      <span class="tutorial-icon">💥</span>
+      <div class="tutorial-text"><strong>Destroy (Press 9)</strong> — Click on any object to annihilate it completely.</div>
+    </div>
+    <div class="tutorial-step">
+      <span class="tutorial-icon">🔭</span>
+      <div class="tutorial-text"><strong>Inspect (Press 0)</strong> — Click on any celestial body to view its details.</div>
+    </div>
+  </div>
+  
+  <div class="tutorial-section">
+    <div class="tutorial-section-title">TIME CONTROL</div>
+    <div class="tutorial-step">
+      <span class="tutorial-icon">⏸</span>
+      <div class="tutorial-text"><strong>Bottom Right Controls</strong> — Pause, play at normal speed, or accelerate time (1×, 3×, 10×).</div>
+    </div>
+  </div>
+  
+  <button class="tutorial-btn" onclick="closeTutorial()">I UNDERSTAND</button>
+  <div class="tutorial-skip" onclick="skipTutorial()">Skip Tutorial Forever</div>
+</div>
+
+<!-- HUD -->
+<div id="hud">
+  <div class="hud-title">COSMOS</div>
+  <div class="hud-stats">
+    <div class="hud-stat"><span class="hud-stat-val" id="stat-stars">0</span><span class="hud-stat-label">Stars</span></div>
+    <div class="hud-stat"><span class="hud-stat-val" id="stat-planets">0</span><span class="hud-stat-label">Worlds</span></div>
+    <div class="hud-stat"><span class="hud-stat-val" id="stat-life">0</span><span class="hud-stat-label">Civilizations</span></div>
+    <div class="hud-stat"><span class="hud-stat-val" id="stat-bh">0</span><span class="hud-stat-label">Black Holes</span></div>
+    <div class="hud-stat"><span class="hud-stat-val" id="stat-comets">0</span><span class="hud-stat-label">Comets</span></div>
+    <div class="hud-stat"><span class="hud-stat-val" id="stat-age">0</span><span class="hud-stat-label">Billion Yrs</span></div>
+  </div>
+</div>
+
+<!-- TIME CONTROLS -->
+<div id="timectrl">
+  <div class="tc-btn" onclick="setSpeed(0)" id="tc-pause" title="Pause">⏸</div>
+  <div class="tc-btn active" onclick="setSpeed(1)" id="tc-1x" title="Normal">▶</div>
+  <div class="tc-btn" onclick="setSpeed(3)" id="tc-3x" title="Fast">⏩</div>
+  <div class="tc-btn" onclick="setSpeed(10)" id="tc-10x" title="Very Fast">⚡</div>
+  <span class="speed-label" id="speed-label">1×</span>
+</div>
+
+<!-- TOOLS -->
+<div id="tools">
+  <div class="tool-btn active" id="tool-star" onclick="setTool('star')">⭐<span class="tool-tip">BIRTH STAR — Hold & Release</span><span class="tool-key">1</span></div>
+  <div class="tool-btn" id="tool-planet" onclick="setTool('planet')">🪐<span class="tool-tip">FORGE PLANET — Click near star</span><span class="tool-key">2</span></div>
+  <div class="tool-btn" id="tool-life" onclick="setTool('life')">🌱<span class="tool-tip">SPARK LIFE — Click on Planet</span><span class="tool-key">3</span></div>
+  <div class="tool-btn" id="tool-blackhole" onclick="setTool('blackhole')">🕳️<span class="tool-tip">BLACK HOLE — Hold & Release</span><span class="tool-key">4</span></div>
+  <div class="tool-btn" id="tool-comet" onclick="setTool('comet')">☄️<span class="tool-tip">COMET — Drag to aim</span><span class="tool-key">5</span></div>
+  <div class="tool-btn" id="tool-wormhole" onclick="setTool('wormhole')">🌀<span class="tool-tip">WORMHOLE — Click twice</span><span class="tool-key">6</span></div>
+  <div class="tool-btn" id="tool-nebula" onclick="setTool('nebula')">🌌<span class="tool-tip">NEBULA — Drag to paint</span><span class="tool-key">7</span></div>
+  <div class="tool-btn" id="tool-supernova" onclick="setTool('supernova')">💫<span class="tool-tip">SUPERNOVA — Click on Star</span><span class="tool-key">8</span></div>
+  <div class="tool-btn" id="tool-destroy" onclick="setTool('destroy')">💥<span class="tool-tip">DESTROY — Click</span><span class="tool-key">9</span></div>
+  <div class="tool-btn" id="tool-inspect" onclick="setTool('inspect')">🔭<span class="tool-tip">INSPECT — Click anything</span><span class="tool-key">0</span></div>
+</div>
+
+<!-- POWER METER -->
+<div id="power-wrap">
+  <span class="power-label">DIVINE POWER</span>
+  <div id="power-track"><div id="power-fill"></div></div>
+  <span class="power-label" id="power-pct">0%</span>
+</div>
+
+<!-- EVENT LOG -->
+<div id="eventlog"></div>
+
+<!-- GOD VOICE -->
+<div id="godvoice"></div>
+
+<!-- INSPECT PANEL -->
+<div id="inspect">
+  <div class="inspect-title" id="inspect-title">CELESTIAL BODY</div>
+  <div id="inspect-rows"></div>
+  <div class="inspect-close" onclick="closeInspect()">✕ CLOSE</div>
+</div>
+
+<!-- ACHIEVEMENT -->
+<div id="achievement"><div class="ach-title" id="ach-title">ACHIEVEMENT</div><div class="ach-sub" id="ach-sub"></div></div>
+
+<!-- HINT -->
+<div id="hint">HOLD TO CHARGE · RELEASE TO CREATE · PRESS 0–9 TO SWITCH TOOLS</div>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  COSMOS v2 — God Mode Universe Simulator
+//  New: Comets, Wormholes, Supernovae, Time Control,
+//       Inspect, Minimap, Achievements, Star Mergers,
+//       Galactic Spiral Formation, Shockwaves
+// ════════════════════════════════════════════════════════
+
+const canvas = document.getElementById('cosmos');
+const ctx = canvas.getContext('2d');
+let W, H;
+
+function resize(){
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ── CURSOR ──────────────────────────────────────────────
+const cursorEl = document.getElementById('cursor');
+let mx = W/2, my = H/2;
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cursorEl.style.left = mx+'px';
+  cursorEl.style.top = my+'px';
+});
+
+// ── AUDIO ───────────────────────────────────────────────
+let ac = null;
+function ensureAudio(){
+  if(!ac) ac = new(window.AudioContext||window.webkitAudioContext)();
+  if(ac.state==='suspended') ac.resume();
+}
+function tone(freq,type='sine',vol=0.15,dur=0.8,delay=0,detune=0){
+  if(!ac)return;
+  const o=ac.createOscillator(),g=ac.createGain();
+  const t=ac.currentTime+delay;
+  o.type=type; o.frequency.setValueAtTime(freq,t);
+  if(detune) o.detune.setValueAtTime(detune,t);
+  g.gain.setValueAtTime(0,t);
+  g.gain.linearRampToValueAtTime(vol,t+0.02);
+  g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+  o.connect(g);g.connect(ac.destination);
+  o.start(t);o.stop(t+dur+0.05);
+}
+function chord(freqs,vol=0.08,dur=1.2){freqs.forEach((f,i)=>setTimeout(()=>tone(f,'sine',vol,dur),i*55));}
+function sndStarBirth(){chord([523,659,784,1047],0.12,1.5);setTimeout(()=>tone(2093,'sine',0.05,0.5),300);}
+function sndBlackHole(){[200,150,100,60].forEach((f,i)=>setTimeout(()=>tone(f,'sawtooth',0.18,1.4),i*150));}
+function sndDestroy(){tone(80,'sawtooth',0.3,0.3);tone(50,'sawtooth',0.2,0.5,0.1);}
+function sndLife(){[523,659,784,1047,1319,1568].forEach((f,i)=>setTimeout(()=>tone(f,'sine',0.07,0.7),i*90));}
+function sndSupernova(){[300,200,100,50].forEach((f,i)=>setTimeout(()=>tone(f,'sawtooth',0.25,0.8),i*80));chord([1047,1319,1568],0.08,2,0.2);}
+function sndComet(){tone(880,'sawtooth',0.08,0.3);tone(440,'sine',0.1,0.5,0.15);}
+function sndWormhole(){[200,300,400,300,200].forEach((f,i)=>setTimeout(()=>tone(f,'sine',0.1,0.4),i*100));}
+function sndBigBang(){[65,82,98,123,196,261,329,392,523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,'sine',0.15,2.5-i*0.1),i*80));}
+function sndAchievement(){chord([523,659,784,1047],0.1,0.6);setTimeout(()=>chord([659,784,1047,1319],0.08,0.8),300);}
+function sndTimeFast(){tone(880,'sine',0.06,0.2);}
+function sndMerger(){[200,300,250,400].forEach((f,i)=>setTimeout(()=>tone(f,'sine',0.15,0.5),i*100));}
+
+// ── STATE ────────────────────────────────────────────────
+let stars=[], planets=[], blackholes=[], nebulae=[], particles=[], civilizations=[];
+let comets=[], wormholes=[], shockwaves=[], wormholePending=null;
+let universeAge=0, frameCount=0, gameSpeed=1, gameRunning=false;
+let activeTool='star', holding=false, holdStart=0, holdX=0, holdY=0;
+let cometDragStart=null;
+let inspectedObject=null;
+let achievements={stars10:false,blackhole1:false,life5:false,comet10:false,wormhole1:false,supernova1:false,destroyer:false};
+
+// ── TOOLS ────────────────────────────────────────────────
+function setTool(t){
+  activeTool=t;
+  document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active'));
+  const el=document.getElementById('tool-'+t);
+  if(el) el.classList.add('active');
+  wormholePending=null;
+  cometDragStart=null;
+  holding=false;
+  updatePowerBar(0);
+}
+
+// ── TIME CONTROL ─────────────────────────────────────────
+function setSpeed(s){
+  gameSpeed=s;
+  ['pause','1x','3x','10x'].forEach(id=>document.getElementById('tc-'+id)?.classList.remove('active'));
+  const ids={0:'pause',1:'1x',3:'3x',10:'10x'};
+  document.getElementById('tc-'+ids[s])?.classList.add('active');
+  document.getElementById('speed-label').textContent=s===0?'⏸':s+'×';
+  if(s>1) sndTimeFast();
+}
+
+// ── CREATION ─────────────────────────────────────────────
+function createStar(x,y,power=1){
+  const sz=6+power*20+Math.random()*8;
+  const typeRng=Math.random();
+  let type,colors;
+  if(typeRng<0.45){type='yellow-dwarf';colors=['#fff7c0','#ffe066','#ffd700'];}
+  else if(typeRng<0.65){type='red-giant';colors=['#ff9966','#ff6633','#ff4400'];}
+  else if(typeRng<0.80){type='blue-giant';colors=['#c0d8ff','#99bbff','#6699ff'];}
+  else if(typeRng<0.92){type='white-dwarf';colors=['#ffffff','#f0f0ff','#ccccff'];}
+  else{type='neutron';colors=['#aaffff','#00ffff','#00cccc'];}
+  const s={x,y,sz,type,colors,mass:sz*sz*0.12,power,
+    vx:(Math.random()-.5)*.4,vy:(Math.random()-.5)*.4,
+    age:0,maxAge:15000+Math.random()*60000,
+    brightness:1,flicker:Math.random()*Math.PI*2,
+    dead:false,dying:false,planets:[],id:Date.now()+Math.random()
+  };
+  stars.push(s);
+  spawnBurst(x,y,colors[0],sz,40);
+  logEvent(`A ${type.replace('-',' ')} ignites in the void.`);
+  updateStats();
+  checkAchievement('stars10',stars.length>=10,'STELLAR NURSERY','10 stars now burn.');
+}
+
+function createPlanet(x,y,parentStar=null){
+  const sz=4+Math.random()*10;
+  const palettes=[
+    ['#4488ff','#2255cc','#88aaff'],['#44aa44','#228822','#88cc88'],
+    ['#cc8844','#aa6622','#ddaa66'],['#ffffff','#ddddff','#aaaacc'],
+    ['#aa44aa','#882288','#cc66cc'],['#ff6644','#dd4422','#ff8866'],
+    ['#44cccc','#228888','#88eeee'],
+  ];
+  const pal=palettes[Math.floor(Math.random()*palettes.length)];
+  let orbit=null;
+  if(parentStar){
+    const minR=parentStar.sz*3.5,maxR=parentStar.sz*11;
+    orbit={star:parentStar,radius:minR+Math.random()*(maxR-minR),angle:Math.random()*Math.PI*2,speed:(0.003+Math.random()*0.005)*(Math.random()>.5?1:-1)};
+    x=parentStar.x+Math.cos(orbit.angle)*orbit.radius;
+    y=parentStar.y+Math.sin(orbit.angle)*orbit.radius;
+  }
+  const p={x,y,sz,pal,orbit,vx:(Math.random()-.5)*.5,vy:(Math.random()-.5)*.5,
+    age:0,hasLife:false,civAge:0,dead:false,
+    rings:Math.random()>.6,moons:Math.floor(Math.random()*4),
+    rotation:Math.random()*Math.PI*2,rotSpeed:(.002+Math.random()*.005)*(Math.random()>.5?1:-1),
+    id:Date.now()+Math.random()};
+  planets.push(p);
+  if(parentStar) parentStar.planets.push(p);
+  logEvent(`A world cools and solidifies.`);
+  updateStats();
+}
+
+function createBlackHole(x,y,power=1){
+  const sz=12+power*22;
+  blackholes.push({x,y,sz,mass:sz*sz*6,age:0,vx:0,vy:0,accAngle:0,dead:false,id:Date.now()+Math.random()});
+  logEvent(`Spacetime tears. A singularity yawns open.`);
+  showGodVoice('LET THERE BE DARKNESS');
+  sndBlackHole();
+  spawnBurst(x,y,'#aa44ff',sz,60);
+  updateStats();
+  checkAchievement('blackhole1',true,'EVENT HORIZON','A black hole is born.');
+}
+
+function createComet(x,y,vx,vy){
+  comets.push({x,y,vx,vy,sz:2+Math.random()*3,tail:[],age:0,dead:false,id:Date.now()+Math.random()});
+  sndComet();
+  updateStats();
+  checkAchievement('comet10',comets.length+20>=10,'METEOR SHOWER','10 comets launched.');
+}
+
+function createWormhole(x,y){
+  if(!wormholePending){
+    wormholePending={x,y};
+    logEvent(`A wormhole entrance tears open. Click again for the exit.`);
+    showGodVoice('A BRIDGE IN SPACETIME');
+    sndWormhole();
+    spawnBurst(x,y,'#00ffcc',20,30);
+  } else {
+    wormholes.push({ax:wormholePending.x,ay:wormholePending.y,bx:x,by:y,age:0,radius:18,active:true});
+    wormholePending=null;
+    logEvent(`Two points in space are now one.`);
+    spawnBurst(x,y,'#00ffcc',20,30);
+    checkAchievement('wormhole1',true,'SPACE-TIME BRIDGE','A wormhole connected two stars.');
+  }
+}
+
+function createNebula(x,y,sz,color){
+  nebulae.push({x,y,sz,color,opacity:.05+Math.random()*.07,age:0});
+}
+
+function triggerSupernova(star){
+  const sz=star.sz;
+  star.dead=true;
+  // Big shockwave
+  shockwaves.push({x:star.x,y:star.y,r:sz,maxR:sz*20+200,color:star.colors[0],age:0,maxAge:80,alpha:0.8});
+  spawnBurst(star.x,star.y,star.colors[0],sz,120);
+  sndSupernova();
+  showGodVoice('SUPERNOVA');
+  logEvent(`A star collapses in a blinding supernova. Elements scatter across the void.`);
+  // Scatter planets
+  for(let i=0;i<3+Math.floor(Math.random()*4);i++){
+    const a=Math.random()*Math.PI*2,r=sz*2+Math.random()*100;
+    createPlanet(star.x+Math.cos(a)*r,star.y+Math.sin(a)*r);
+  }
+  // Chance to become black hole
+  if(star.sz>16){
+    setTimeout(()=>createBlackHole(star.x,star.y,0.4),1500);
+  }
+  updateStats();
+  checkAchievement('supernova1',true,'STELLAR DEATH','A supernova shook the universe.');
+}
+
+function spawnLife(planet){
+  if(planet.hasLife) return;
+  planet.hasLife=true; planet.civAge=0;
+  civilizations.push({planet,age:0,level:1,dead:false,name:genCivName()});
+  logEvent(`Life emerges. Consciousness stirs in the dark.`);
+  showGodVoice('LET THERE BE LIFE');
+  sndLife();
+  updateStats();
+  checkAchievement('life5',civilizations.length>=5,'GARDEN OF WORLDS','5 civilizations flourish.');
+}
+
+function destroyObject(x,y){
+  const r=65; let destroyed=false;
+  stars=stars.filter(s=>{
+    if(Math.hypot(s.x-x,s.y-y)<r+s.sz){
+      triggerSupernova(s); destroyed=true; return false;
+    }return true;
+  });
+  planets=planets.filter(p=>{
+    if(Math.hypot(p.x-x,p.y-y)<r+p.sz){
+      spawnBurst(p.x,p.y,p.pal[0],p.sz,80);
+      shockwaves.push({x:p.x,y:p.y,r:p.sz,maxR:120,color:p.pal[0],age:0,maxAge:40,alpha:0.6});
+      if(p.hasLife) logEvent(`A civilization is erased. Their art, their laughter — gone.`);
+      else logEvent(`A world shatters into dust.`);
+      civilizations=civilizations.filter(c=>c.planet!==p);
+      sndDestroy(); destroyed=true; updateStats(); return false;
+    }return true;
+  });
+  blackholes=blackholes.filter(b=>{
+    if(Math.hypot(b.x-x,b.y-y)<r+b.sz){
+      spawnBurst(b.x,b.y,'#ffffff',b.sz,100);
+      shockwaves.push({x:b.x,y:b.y,r:b.sz,maxR:300,color:'#ffffff',age:0,maxAge:60,alpha:1});
+      logEvent(`The singularity implodes. White light floods the cosmos.`);
+      sndDestroy(); destroyed=true; updateStats(); return false;
+    }return true;
+  });
+  wormholes=wormholes.filter(w=>{
+    if(Math.hypot(w.ax-x,w.ay-y)<r+w.radius||Math.hypot(w.bx-x,w.by-y)<r+w.radius){
+      logEvent(`The wormhole collapses. The bridge between worlds is severed.`);
+      destroyed=true; return false;
+    }return true;
+  });
+  if(!destroyed) showGodVoice('NOTHING THERE');
+  checkAchievement('destroyer',stars.length===0&&planets.length===0&&blackholes.length===0,'THE GREAT SILENCE','You destroyed everything.');
+}
+
+function inspectAt(x,y){
+  let obj=null,type='';
+  stars.forEach(s=>{if(Math.hypot(s.x-x,s.y-y)<s.sz+20){obj=s;type='star';}});
+  planets.forEach(p=>{if(!obj&&Math.hypot(p.x-x,p.y-y)<p.sz+15){obj=p;type='planet';}});
+  blackholes.forEach(b=>{if(!obj&&Math.hypot(b.x-x,b.y-y)<b.sz+10){obj=b;type='blackhole';}});
+  if(!obj){closeInspect();return;}
+  inspectedObject={obj,type};
+  const panel=document.getElementById('inspect');
+  const rows=document.getElementById('inspect-rows');
+  let html='',title='';
+  if(type==='star'){
+    title='⭐ '+obj.type.replace(/-/g,' ').toUpperCase();
+    html=row('Age',Math.floor(obj.age/100)+' Myrs')+row('Size',obj.sz.toFixed(1)+' sol')+row('Mass',obj.mass.toFixed(0))+row('Planets',obj.planets.filter(p=>!p.dead).length)+row('Status',obj.dying?'DYING':'STABLE');
+  } else if(type==='planet'){
+    const civ=civilizations.find(c=>c.planet===obj);
+    title='🪐 PLANET';
+    html=row('Age',Math.floor(obj.age/100)+' Myrs')+row('Size',obj.sz.toFixed(1)+' AU')+row('Rings',obj.rings?'Yes':'No')+row('Moons',obj.moons)+row('Life',obj.hasLife?'YES ✓':'None')+(civ?row('Civilization',civ.name)+row('Civ Level',civ.level+'/5'):'')+row('Orbit',obj.orbit?'Stellar':'Rogue');
+  } else if(type==='blackhole'){
+    title='🕳 SINGULARITY';
+    html=row('Size',obj.sz.toFixed(1)+' Rs')+row('Mass',obj.mass.toFixed(0)+' M☉')+row('Age',Math.floor(obj.age/100)+' Myrs')+row('Status','CONSUMING');
+  }
+  document.getElementById('inspect-title').textContent=title;
+  rows.innerHTML=html;
+  panel.classList.add('show');
+}
+function row(k,v){return`<div class="inspect-row"><span class="inspect-key">${k}</span><span class="inspect-val">${v}</span></div>`;}
+function closeInspect(){document.getElementById('inspect').classList.remove('show');inspectedObject=null;}
+
+// ── PARTICLE SYSTEMS ─────────────────────────────────────
+function spawnBurst(x,y,color,size,count=50){
+  for(let i=0;i<count;i++){
+    const a=Math.random()*Math.PI*2,sp=1+Math.random()*size*0.25;
+    particles.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:1+Math.random()*3.5,color,alpha:1,decay:.012+Math.random()*.018});
+  }
+}
+
+// ── PHYSICS ──────────────────────────────────────────────
+function updateUniverse(){
+  const steps = gameSpeed===0?0:gameSpeed;
+  for(let step=0;step<steps;step++) physicsTick();
+}
+
+function physicsTick(){
+  universeAge+=0.0005;
+  frameCount++;
+
+  // ── STARS ──
+  for(let i=stars.length-1;i>=0;i--){
+    const s=stars[i];
+    s.age++; s.flicker+=0.05;
+    s.brightness=0.82+Math.sin(s.flicker)*0.18;
+    s.vx*=0.999;s.vy*=0.999;
+    s.x+=s.vx;s.y+=s.vy;
+    if(s.x<0||s.x>W)s.vx*=-.5;
+    if(s.y<0||s.y>H)s.vy*=-.5;
+    s.x=Math.max(0,Math.min(W,s.x));
+    s.y=Math.max(0,Math.min(H,s.y));
+
+    // Black hole pull
+    blackholes.forEach(bh=>{
+      const dx=bh.x-s.x,dy=bh.y-s.y,d=Math.hypot(dx,dy)||1;
+      if(d<bh.sz){spawnBurst(s.x,s.y,s.colors[0],s.sz,40);logEvent(`A star is swallowed.`);bh.sz+=s.sz*.3;s.dead=true;updateStats();}
+      else if(d<350){const f=bh.mass/(d*d)*.4;s.vx+=dx/d*f;s.vy+=dy/d*f;}
+    });
+
+    // Star-star collision → merger
+    for(let j=i+1;j<stars.length;j++){
+      const s2=stars[j];
+      if(Math.hypot(s.x-s2.x,s.y-s2.y)<s.sz+s2.sz){
+        const bigger=s.sz>=s2.sz?s:s2;
+        const smaller=s.sz<s2.sz?s:s2;
+        bigger.sz+=smaller.sz*.5;
+        bigger.mass+=smaller.mass*.5;
+        spawnBurst(bigger.x,bigger.y,bigger.colors[0],bigger.sz,60);
+        smaller.dead=true;
+        logEvent(`Two stars collide and merge in a blinding flash.`);
+        sndMerger();
+        updateStats();
+      }
+    }
+
+    // Natural death
+    if(s.age>s.maxAge&&!s.dying){
+      s.dying=true;
+      setTimeout(()=>{if(!s.dead)triggerSupernova(s);},2000);
+    }
+    if(s.dying)s.sz=Math.max(0,s.sz*.9985);
+    if(s.dead)stars.splice(i,1);
+  }
+
+  // ── PLANETS ──
+  for(let i=planets.length-1;i>=0;i--){
+    const p=planets[i];
+    p.age++;
+    p.rotation+=p.rotSpeed;
+    if(p.orbit){
+      p.orbit.angle+=p.orbit.speed;
+      p.x=p.orbit.star.x+Math.cos(p.orbit.angle)*p.orbit.radius;
+      p.y=p.orbit.star.y+Math.sin(p.orbit.angle)*p.orbit.radius;
+      if(!stars.includes(p.orbit.star)){p.orbit=null;p.vx=(Math.random()-.5)*2;p.vy=(Math.random()-.5)*2;}
+    } else {
+      p.vx*=.998;p.vy*=.998;
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0||p.x>W)p.vx*=-.5;
+      if(p.y<0||p.y>H)p.vy*=-.5;
+    }
+    // BH consumption
+    blackholes.forEach(bh=>{
+      if(Math.hypot(bh.x-p.x,bh.y-p.y)<bh.sz){
+        if(p.hasLife)logEvent(`A civilization screams as their world vanishes.`);
+        spawnBurst(p.x,p.y,p.pal[0],p.sz*4,60);
+        p.dead=true;civilizations=civilizations.filter(c=>c.planet!==p);updateStats();
+      }
+    });
+    // Wormhole transport
+    wormholes.forEach(w=>{
+      if(Math.hypot(w.ax-p.x,w.ay-p.y)<w.radius){p.x=w.bx+(Math.random()-0.5)*30;p.y=w.by+(Math.random()-0.5)*30;p.vx*=-0.3;p.vy*=-0.3;logEvent(`A world slips through the wormhole.`);}
+      else if(Math.hypot(w.bx-p.x,w.by-p.y)<w.radius){p.x=w.ax+(Math.random()-0.5)*30;p.y=w.ay+(Math.random()-0.5)*30;p.vx*=-0.3;p.vy*=-0.3;}
+    });
+    if(p.dead)planets.splice(i,1);
+  }
+
+  // ── COMETS ──
+  for(let i=comets.length-1;i>=0;i--){
+    const c=comets[i];
+    c.age++;
+    c.x+=c.vx;c.y+=c.vy;
+    c.vy+=0.008; // slight gravity
+    c.tail.unshift({x:c.x,y:c.y});
+    if(c.tail.length>35)c.tail.pop();
+    // BH suck
+    blackholes.forEach(bh=>{
+      const dx=bh.x-c.x,dy=bh.y-c.y,d=Math.hypot(dx,dy)||1;
+      if(d<bh.sz){c.dead=true;}
+      else if(d<200){c.vx+=dx/d*bh.mass/(d*d)*0.8;c.vy+=dy/d*bh.mass/(d*d)*0.8;}
+    });
+    // Hit planet
+    planets.forEach(p=>{
+      if(Math.hypot(c.x-p.x,c.y-p.y)<p.sz+c.sz*2){
+        spawnBurst(c.x,c.y,'#ffeeaa',c.sz,25);
+        if(!p.hasLife&&Math.random()>.6){spawnLife(p);logEvent(`A comet strikes a world, seeding it with life!`);}
+        else logEvent(`A comet impacts a world.`);
+        c.dead=true;
+      }
+    });
+    // Hit star → mini-flare
+    stars.forEach(s=>{
+      if(Math.hypot(c.x-s.x,c.y-s.y)<s.sz){spawnBurst(s.x,s.y,s.colors[0],s.sz,20);c.dead=true;}
+    });
+    if(c.x<-200||c.x>W+200||c.y<-200||c.y>H+200||c.age>2000)c.dead=true;
+    if(c.dead)comets.splice(i,1);
+  }
+
+  // ── CIVILIZATIONS ──
+  for(let i=civilizations.length-1;i>=0;i--){
+    const civ=civilizations[i];
+    civ.age++;civ.planet.civAge++;
+    if(civ.age%1800===0&&civ.level<5){civ.level++;logEvent(`${civ.name} reaches a new era of enlightenment.`);}
+    // Civ-to-civ contact
+    if(civ.level>=3&&frameCount%500===0){
+      const other=civilizations.find((c,j)=>j!==i&&c.planet&&civ.planet&&Math.hypot(c.planet.x-civ.planet.x,c.planet.y-civ.planet.y)<400);
+      if(other)logEvent(`${civ.name} makes contact with ${other.name}.`);
+    }
+    if(Math.random()<0.000015&&civ.age>800){
+      civ.dead=true;civ.planet.hasLife=false;
+      logEvent(`${civ.name} falls silent. An epoch ends.`);updateStats();
+    }
+    if(civ.dead)civilizations.splice(i,1);
+  }
+
+  // ── BLACK HOLES ──
+  blackholes.forEach(bh=>{bh.age++;bh.accAngle+=0.025;bh.sz+=0.0004;});
+
+  // ── SHOCKWAVES ──
+  for(let i=shockwaves.length-1;i>=0;i--){
+    const sw=shockwaves[i];
+    sw.age++;
+    sw.r+=(sw.maxR-sw.r)*0.08;
+    sw.alpha*=0.93;
+    if(sw.age>sw.maxAge||sw.alpha<0.01)shockwaves.splice(i,1);
+  }
+
+  // ── PARTICLES ──
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];
+    p.x+=p.vx;p.y+=p.vy;
+    p.vx*=0.97;p.vy*=0.97;
+    p.alpha-=p.decay;
+    if(p.alpha<=0)particles.splice(i,1);
+  }
+
+  // Auto nebulae
+  if(frameCount%180===0&&stars.length>0){
+    const s=stars[Math.floor(Math.random()*stars.length)];
+    createNebula(s.x+Math.random()*180-90,s.y+Math.random()*180-90,50+Math.random()*100,s.colors[1]);
+    if(nebulae.length>80)nebulae.shift();
+  }
+
+  // Cosmic events
+  if(frameCount%2500===0&&stars.length>2)logEvent(`Gravitational waves ripple across the fabric of spacetime.`);
+  if(frameCount%5000===0&&civilizations.length>0){
+    const civ=civilizations[Math.floor(Math.random()*civilizations.length)];
+    logEvent(`${civ.name} composes their first symphony. It drifts into the cosmos.`);
+  }
+}
+
+// ── DRAWING ───────────────────────────────────────────────
+const bgStars=Array.from({length:350},()=>({x:Math.random(),y:Math.random(),r:Math.random()*1.3+.2,a:Math.random()*.5+.1,phase:Math.random()*Math.PI*2,sp:.001+Math.random()*.003}));
+
+function draw(){
+  ctx.fillStyle='rgba(0,0,5,0.13)';
+  ctx.fillRect(0,0,W,H);
+
+  // Bg stars
+  bgStars.forEach(s=>{
+    s.phase+=s.sp;
+    ctx.globalAlpha=s.a*(.5+Math.sin(s.phase)*.5);
+    ctx.beginPath();ctx.arc(s.x*W,s.y*H,s.r,0,Math.PI*2);
+    ctx.fillStyle='#f0ede6';ctx.fill();
+  });
+  ctx.globalAlpha=1;
+
+  // Nebulae
+  nebulae.forEach(n=>{
+    ctx.save();ctx.globalAlpha=n.opacity;
+    const g=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,n.sz);
+    g.addColorStop(0,n.color);g.addColorStop(1,'transparent');
+    ctx.beginPath();ctx.arc(n.x,n.y,n.sz,0,Math.PI*2);
+    ctx.fillStyle=g;ctx.fill();ctx.restore();
+  });
+
+  // Shockwaves
+  shockwaves.forEach(sw=>{
+    ctx.save();ctx.globalAlpha=sw.alpha*0.5;
+    ctx.beginPath();ctx.arc(sw.x,sw.y,sw.r,0,Math.PI*2);
+    ctx.strokeStyle=sw.color;ctx.lineWidth=2;ctx.stroke();
+    ctx.globalAlpha=sw.alpha*0.15;
+    ctx.beginPath();ctx.arc(sw.x,sw.y,sw.r*.7,0,Math.PI*2);
+    ctx.strokeStyle=sw.color;ctx.lineWidth=1;ctx.stroke();
+    ctx.restore();
+  });
+
+  // Wormholes
+  wormholes.forEach(w=>{
+    w.age++;
+    [w.ax,w.ay,w.bx,w.by].forEach((coord,ci)=>{
+      if(ci%2!==0)return;
+      const wx=coord,wy=[w.ay,w.by][ci/2];
+      for(let ring=0;ring<4;ring++){
+        const r=w.radius*(0.4+ring*.25);
+        const alpha=0.6-ring*.12;
+        ctx.save();ctx.globalAlpha=alpha;
+        ctx.beginPath();ctx.arc(wx,wy,r,0,Math.PI*2);
+        ctx.strokeStyle=`hsl(${170+ring*20+w.age*.5},100%,60%)`;
+        ctx.lineWidth=2-ring*.3;ctx.stroke();ctx.restore();
+      }
+      const g=ctx.createRadialGradient(wx,wy,0,wx,wy,w.radius);
+      g.addColorStop(0,'rgba(0,255,200,0.25)');g.addColorStop(1,'transparent');
+      ctx.beginPath();ctx.arc(wx,wy,w.radius,0,Math.PI*2);
+      ctx.fillStyle=g;ctx.fill();
+    });
+    // Connecting beam
+    ctx.save();ctx.globalAlpha=0.08+Math.sin(w.age*.05)*.04;
+    ctx.beginPath();ctx.moveTo(w.ax,w.ay);ctx.lineTo(w.bx,w.by);
+    ctx.strokeStyle='#00ffcc';ctx.lineWidth=1;ctx.setLineDash([6,12]);ctx.stroke();
+    ctx.setLineDash([]);ctx.restore();
+  });
+
+  // Pending wormhole
+  if(wormholePending){
+    const pulse=Math.sin(frameCount*.08)*.5+.5;
+    ctx.save();ctx.globalAlpha=0.3+pulse*.3;
+    ctx.beginPath();ctx.arc(wormholePending.x,wormholePending.y,20,0,Math.PI*2);
+    ctx.strokeStyle='#00ffcc';ctx.lineWidth=2;ctx.stroke();ctx.restore();
+  }
+
+  // Black holes
+  blackholes.forEach(bh=>{
+    ctx.save();
+    // Lensing
+    for(let ring=0;ring<6;ring++){
+      const r=bh.sz*(1.4+ring*.7);
+      ctx.globalAlpha=0.12-ring*.018;
+      ctx.beginPath();ctx.arc(bh.x,bh.y,r,0,Math.PI*2);
+      ctx.strokeStyle='rgba(140,60,200,1)';ctx.lineWidth=2.5-ring*.3;ctx.stroke();
+    }
+    // Accretion disk
+    ctx.save();ctx.translate(bh.x,bh.y);ctx.rotate(bh.accAngle);ctx.scale(1,.22);
+    for(let i=0;i<4;i++){
+      const r=bh.sz*(1.2+i*.35);
+      ctx.globalAlpha=.5-i*.1;
+      ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);
+      ctx.strokeStyle=`hsl(${20+i*25},100%,65%)`;ctx.lineWidth=4-i;ctx.stroke();
+    }
+    ctx.restore();
+    // Event horizon
+    const bhg=ctx.createRadialGradient(bh.x,bh.y,0,bh.x,bh.y,bh.sz);
+    bhg.addColorStop(0,'rgba(0,0,0,1)');bhg.addColorStop(.75,'rgba(0,0,0,1)');bhg.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.globalAlpha=1;ctx.beginPath();ctx.arc(bh.x,bh.y,bh.sz,0,Math.PI*2);ctx.fillStyle=bhg;ctx.fill();
+    // Hawking sparkle
+    if(Math.random()<.12){const a=Math.random()*Math.PI*2,r=bh.sz+2;ctx.globalAlpha=.8;ctx.beginPath();ctx.arc(bh.x+Math.cos(a)*r,bh.y+Math.sin(a)*r,1,0,Math.PI*2);ctx.fillStyle='rgba(200,150,255,0.9)';ctx.fill();}
+    ctx.restore();
+  });
+
+  // Stars
+  stars.forEach(s=>{
+    ctx.save();ctx.globalAlpha=s.brightness*(s.dying?.5:1);
+    const cg=ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.sz*3.5);
+    cg.addColorStop(0,s.colors[0]+'99');cg.addColorStop(.5,s.colors[1]+'33');cg.addColorStop(1,'transparent');
+    ctx.beginPath();ctx.arc(s.x,s.y,s.sz*3.5,0,Math.PI*2);ctx.fillStyle=cg;ctx.fill();
+    const sg=ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.sz);
+    sg.addColorStop(0,'#ffffff');sg.addColorStop(.3,s.colors[0]);sg.addColorStop(1,s.colors[2]);
+    ctx.beginPath();ctx.arc(s.x,s.y,s.sz,0,Math.PI*2);ctx.fillStyle=sg;ctx.fill();
+    // Cross flare
+    const fl=s.sz*4.5*s.brightness;
+    ctx.strokeStyle=s.colors[0]+'55';ctx.lineWidth=.6;
+    ctx.beginPath();ctx.moveTo(s.x-fl,s.y);ctx.lineTo(s.x+fl,s.y);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(s.x,s.y-fl);ctx.lineTo(s.x,s.y+fl);ctx.stroke();
+    // Diagonal flares (for large stars)
+    if(s.sz>14){
+      const fl2=fl*.6;
+      ctx.strokeStyle=s.colors[0]+'33';
+      ctx.beginPath();ctx.moveTo(s.x-fl2,s.y-fl2);ctx.lineTo(s.x+fl2,s.y+fl2);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(s.x+fl2,s.y-fl2);ctx.lineTo(s.x-fl2,s.y+fl2);ctx.stroke();
+    }
+    ctx.restore();
+  });
+
+  // Planets
+  planets.forEach(p=>{
+    ctx.save();
+    // Orbit line
+    if(p.orbit&&stars.includes(p.orbit.star)){
+      ctx.beginPath();ctx.arc(p.orbit.star.x,p.orbit.star.y,p.orbit.radius,0,Math.PI*2);
+      ctx.strokeStyle='rgba(240,237,230,0.04)';ctx.lineWidth=.5;ctx.setLineDash([3,10]);ctx.stroke();ctx.setLineDash([]);
+    }
+    // Life glow
+    if(p.hasLife){
+      const civ=civilizations.find(c=>c.planet===p);
+      const lvl=civ?civ.level:1;
+      const pulse=.5+Math.sin(frameCount*.04)*.5;
+      const ag=ctx.createRadialGradient(p.x,p.y,p.sz*.7,p.x,p.y,p.sz*(2+lvl*.4));
+      ag.addColorStop(0,`rgba(80,255,120,${.1+pulse*.08})`);ag.addColorStop(1,'transparent');
+      ctx.beginPath();ctx.arc(p.x,p.y,p.sz*(2+lvl*.4),0,Math.PI*2);ctx.fillStyle=ag;ctx.fill();
+    }
+    // Body
+    ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rotation);
+    const pg=ctx.createRadialGradient(-p.sz*.3,-p.sz*.3,0,0,0,p.sz);
+    pg.addColorStop(0,p.pal[2]);pg.addColorStop(.5,p.pal[0]);pg.addColorStop(1,p.pal[1]);
+    ctx.beginPath();ctx.arc(0,0,p.sz,0,Math.PI*2);ctx.fillStyle=pg;ctx.fill();
+    // Cloud band
+    ctx.globalAlpha=.2;
+    ctx.beginPath();ctx.ellipse(0,0,p.sz,p.sz*.25,0,0,Math.PI*2);
+    ctx.strokeStyle='#ffffff';ctx.lineWidth=p.sz*.3;ctx.stroke();
+    ctx.restore();
+    // Rings
+    if(p.rings){
+      ctx.save();ctx.translate(p.x,p.y);ctx.scale(1,.28);
+      ctx.beginPath();ctx.arc(0,0,p.sz*1.9,0,Math.PI*2);
+      ctx.strokeStyle=p.pal[0]+'77';ctx.lineWidth=p.sz*.55;ctx.stroke();
+      ctx.restore();
+    }
+    // Moons
+    for(let m=0;m<p.moons;m++){
+      const ma=p.rotation*(1+m*.5)+m*(Math.PI*2/p.moons);
+      const mr=p.sz*2.2+m*4;
+      const mx2=p.x+Math.cos(ma)*mr,my2=p.y+Math.sin(ma)*mr;
+      ctx.beginPath();ctx.arc(mx2,my2,1.5,0,Math.PI*2);
+      ctx.fillStyle='rgba(200,200,220,0.7)';ctx.fill();
+    }
+    // Civ lights
+    if(p.hasLife){
+      const civ=civilizations.find(c=>c.planet===p);
+      const lvl=civ?civ.level:1;
+      const pulse=.6+Math.sin(frameCount*.04)*.4;
+      for(let c2=0;c2<lvl*4;c2++){
+        const ca=c2*(Math.PI*2/(lvl*4))+frameCount*.012;
+        ctx.beginPath();ctx.arc(p.x+Math.cos(ca)*p.sz,p.y+Math.sin(ca)*p.sz*.85,1.2,0,Math.PI*2);
+        ctx.fillStyle=`rgba(255,255,180,${pulse*.8})`;ctx.fill();
+      }
+    }
+    ctx.restore();
+  });
+
+  // Comets
+  comets.forEach(c=>{
+    // Tail
+    c.tail.forEach((pt,i)=>{
+      const progress=1-i/c.tail.length;
+      ctx.save();ctx.globalAlpha=progress*.7;
+      ctx.beginPath();ctx.arc(pt.x,pt.y,c.sz*progress*.8,0,Math.PI*2);
+      ctx.fillStyle=`hsl(40,90%,${60+progress*30}%)`;ctx.fill();
+      ctx.restore();
+    });
+    // Head
+    ctx.save();
+    const cg=ctx.createRadialGradient(c.x,c.y,0,c.x,c.y,c.sz*2.5);
+    cg.addColorStop(0,'#ffffff');cg.addColorStop(.4,'#aaddff');cg.addColorStop(1,'transparent');
+    ctx.beginPath();ctx.arc(c.x,c.y,c.sz*2.5,0,Math.PI*2);ctx.fillStyle=cg;ctx.fill();
+    ctx.beginPath();ctx.arc(c.x,c.y,c.sz,0,Math.PI*2);ctx.fillStyle='#ffffff';ctx.fill();
+    ctx.restore();
+  });
+
+  // Particles
+  particles.forEach(p=>{
+    ctx.save();ctx.globalAlpha=p.alpha;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=p.color;ctx.fill();
+    ctx.restore();
+  });
+
+  // Comet drag preview
+  if(activeTool==='comet'&&cometDragStart){
+    ctx.save();ctx.globalAlpha=.5;
+    ctx.beginPath();ctx.moveTo(cometDragStart.x,cometDragStart.y);ctx.lineTo(mx,my);
+    ctx.strokeStyle='#ffeeaa';ctx.lineWidth=1;ctx.setLineDash([4,8]);ctx.stroke();ctx.setLineDash([]);
+    ctx.beginPath();ctx.arc(cometDragStart.x,cometDragStart.y,6,0,Math.PI*2);
+    ctx.fillStyle='#ffeeaa';ctx.fill();
+    ctx.restore();
+  }
+
+  // Hold charge indicator
+  if(holding&&(activeTool==='star'||activeTool==='blackhole')){
+    const power=Math.min(1,(Date.now()-holdStart)/2000);
+    const r=24+power*65;
+    ctx.save();
+    ctx.beginPath();ctx.arc(holdX,holdY,r,-Math.PI/2,-Math.PI/2+Math.PI*2*power);
+    ctx.strokeStyle=`rgba(201,168,76,${.35+power*.55})`;ctx.lineWidth=2;ctx.stroke();
+    ctx.beginPath();ctx.arc(holdX,holdY,5,0,Math.PI*2);
+    ctx.fillStyle=`rgba(201,168,76,${.6+power*.4})`;ctx.fill();
+    ctx.restore();
+    updatePowerBar(power);
+  }
+
+  // Cursor aura
+  const toolColors={star:'#ffd700',planet:'#4488ff',life:'#44ff88',blackhole:'#aa44ff',comet:'#ffeeaa',wormhole:'#00ffcc',nebula:'#ff88ff',supernova:'#ff8800',destroy:'#ff4444',inspect:'#88ffff'};
+  const col=toolColors[activeTool]||'#c9a84c';
+  ctx.save();ctx.globalAlpha=.35;
+  ctx.beginPath();ctx.arc(mx,my,22,0,Math.PI*2);ctx.strokeStyle=col;ctx.lineWidth=1;ctx.stroke();
+  ctx.restore();
+
+  updateHUDStats();
+}
+
+// ── STATS & HUD ───────────────────────────────────────────
+function updateStats(){
+  document.getElementById('stat-stars').textContent=stars.length;
+  document.getElementById('stat-planets').textContent=planets.length;
+  document.getElementById('stat-life').textContent=civilizations.length;
+  document.getElementById('stat-bh').textContent=blackholes.length;
+  document.getElementById('stat-comets').textContent=comets.length;
+}
+function updateHUDStats(){document.getElementById('stat-age').textContent=universeAge.toFixed(3);}
+function updatePowerBar(p){
+  document.getElementById('power-fill').style.width=(p*100)+'%';
+  document.getElementById('power-pct').textContent=Math.floor(p*100)+'%';
+}
+
+// ── EVENT LOG ─────────────────────────────────────────────
+const events=[];
+function logEvent(msg){
+  events.unshift(msg);if(events.length>5)events.pop();
+  document.getElementById('eventlog').innerHTML=events.slice(0,4).map(e=>`<div class="event-item">${e}</div>`).join('');
+}
+
+// ── GOD VOICE ─────────────────────────────────────────────
+let gvTimer;
+function showGodVoice(msg){
+  const el=document.getElementById('godvoice');
+  el.textContent=msg;el.classList.add('show');
+  clearTimeout(gvTimer);gvTimer=setTimeout(()=>el.classList.remove('show'),2800);
+}
+
+// ── ACHIEVEMENTS ─────────────────────────────────────────
+function checkAchievement(key,condition,title,desc){
+  if(achievements[key]||!condition)return;
+  achievements[key]=true;
+  const el=document.getElementById('achievement');
+  document.getElementById('ach-title').textContent='✦ '+title+' ✦';
+  document.getElementById('ach-sub').textContent=desc;
+  el.classList.add('show');
+  sndAchievement();
+  setTimeout(()=>el.classList.remove('show'),3500);
+}
+
+// ── NAME GENERATOR ────────────────────────────────────────
+function genCivName(){
+  const pre=['Keth','Oru','Val','Zan','Thar','Eli','Mor','Vel','Sar','Nov'];
+  const suf=['ari','orn','ius','eth','ean','ion','ael','oth','an','ix'];
+  return pre[Math.floor(Math.random()*pre.length)]+suf[Math.floor(Math.random()*suf.length)];
+}
+
+// ── INPUT ─────────────────────────────────────────────────
+function getPos(e){return e.touches?{x:e.touches[0].clientX,y:e.touches[0].clientY}:{x:e.clientX,y:e.clientY};}
+
+canvas.addEventListener('mousedown',onDown,{passive:false});
+canvas.addEventListener('touchstart',e=>{e.preventDefault();const p=getPos(e);mx=p.x;my=p.y;onDown(e);},{passive:false});
+canvas.addEventListener('mouseup',onUp,{passive:false});
+canvas.addEventListener('touchend',e=>{e.preventDefault();onUp(e);},{passive:false});
+canvas.addEventListener('mousemove',onMov,{passive:false});
+canvas.addEventListener('touchmove',e=>{e.preventDefault();const p=getPos(e);mx=p.x;my=p.y;onMov(e);},{passive:false});
+
+function onDown(e){
+  ensureAudio();
+  const {x,y}=getPos(e);
+  if(activeTool==='destroy'){destroyObject(x,y);return;}
+  if(activeTool==='life'){
+    let near=null,nearD=Infinity;
+    planets.forEach(p=>{const d=Math.hypot(p.x-x,p.y-y);if(d<nearD){nearD=d;near=p;}});
+    if(near&&nearD<near.sz+50)spawnLife(near);
+    else logEvent(`No world found nearby.`);
+    return;
+  }
+  if(activeTool==='wormhole'){createWormhole(x,y);return;}
+  if(activeTool==='comet'){cometDragStart={x,y};return;}
+  if(activeTool==='nebula'){holding=true;holdX=x;holdY=y;return;}
+  if(activeTool==='supernova'){
+    let near=null,nearD=Infinity;
+    stars.forEach(s=>{const d=Math.hypot(s.x-x,s.y-y);if(d<nearD){nearD=d;near=s;}});
+    if(near&&nearD<near.sz+60){triggerSupernova(near);stars=stars.filter(s=>s!==near);}
+    else logEvent(`No star close enough to ignite.`);
+    return;
+  }
+  if(activeTool==='inspect'){inspectAt(x,y);return;}
+  holding=true;holdX=x;holdY=y;holdStart=Date.now();
+}
+
+function onMov(e){
+  const {x,y}=getPos(e);
+  if(activeTool==='nebula'&&holding){
+    const cols=['#ff88aa','#88aaff','#88ffcc','#ffaa88','#cc88ff','#aaffaa'];
+    createNebula(x+Math.random()*25-12,y+Math.random()*25-12,35+Math.random()*70,cols[Math.floor(Math.random()*cols.length)]);
+  }
+}
+
+function onUp(e){
+  const {x,y}=getPos(e);
+  if(activeTool==='comet'&&cometDragStart){
+    const dx=cometDragStart.x-x,dy=cometDragStart.y-y;
+    const speed=Math.min(12,Math.hypot(dx,dy)/40);
+    const len=Math.hypot(dx,dy)||1;
+    createComet(cometDragStart.x,cometDragStart.y,(dx/len)*speed,(dy/len)*speed);
+    cometDragStart=null;return;
+  }
+  if(!holding){return;}
+  const power=Math.min(1,(Date.now()-holdStart)/2000);
+  holding=false;updatePowerBar(0);
+  if(activeTool==='nebula')return;
+  if(activeTool==='star'){
+    createStar(holdX,holdY,power);sndStarBirth();
+    showGodVoice(power>.8?'A GREAT STAR IS BORN':power>.4?'A STAR IGNITES':'A FLICKER IN THE DARK');
+  } else if(activeTool==='planet'){
+    let near=null,nearD=Infinity;
+    stars.forEach(s=>{const d=Math.hypot(s.x-holdX,s.y-holdY);if(d<nearD){nearD=d;near=s;}});
+    createPlanet(holdX,holdY,(near&&nearD<near.sz*13)?near:null);
+    showGodVoice('A WORLD IS BORN');chord([392,494,587],0.1,0.8);
+  } else if(activeTool==='blackhole'){
+    createBlackHole(holdX,holdY,power);
+  }
+}
+
+// Keyboard
+window.addEventListener('keydown',e=>{
+  const map={'1':'star','2':'planet','3':'life','4':'blackhole','5':'comet','6':'wormhole','7':'nebula','8':'supernova','9':'destroy','0':'inspect'};
+  if(map[e.key])setTool(map[e.key]);
+  if(e.key==='p'||e.key==='P')setSpeed(gameSpeed===0?1:0);
+  if(e.key==='f'||e.key==='F')setSpeed(gameSpeed<10?gameSpeed*2:1);
+});
+
+// ── MAIN LOOP ─────────────────────────────────────────────
+function tick(){
+  updateUniverse();
+  draw();
+  requestAnimationFrame(tick);
+}
+tick();
+
+// ── BIG BANG ──────────────────────────────────────────────
+function bigBang(){
+  const cx=W/2,cy=H/2;
+  sndBigBang();
+  showGodVoice('IN THE BEGINNING…');
+  const flash=document.createElement('div');
+  flash.style.cssText='position:fixed;inset:0;background:#fff;z-index:400;pointer-events:none;transition:opacity 2.5s;';
+  document.body.appendChild(flash);
+  setTimeout(()=>{flash.style.opacity='0';},80);
+  setTimeout(()=>flash.remove(),2600);
+  // Nebulae first
+  setTimeout(()=>{
+    for(let i=0;i<12;i++){
+      const a=Math.random()*Math.PI*2,r=60+Math.random()*220;
+      createNebula(cx+Math.cos(a)*r,cy+Math.sin(a)*r,70+Math.random()*140,
+        ['#8844ff','#4488ff','#ff8844','#44ff88','#ff44aa'][Math.floor(Math.random()*5)]);
+    }
+  },400);
+  // Stars
+  setTimeout(()=>{
+    showGodVoice('LET THERE BE LIGHT');
+    for(let i=0;i<6;i++){
+      setTimeout(()=>{
+        const a=Math.random()*Math.PI*2,r=80+Math.random()*Math.min(W,H)*.38;
+        createStar(cx+Math.cos(a)*r,cy+Math.sin(a)*r,.3+Math.random()*.7);
+        tone(220+i*80,'sine',.07,1.5,i*.12);
+      },i*280);
+    }
+  },1200);
+  // Planets
+  setTimeout(()=>{
+    showGodVoice('WORLDS TAKE SHAPE');
+    stars.forEach(s=>{if(Math.random()>.25)createPlanet(s.x,s.y,s);});
+  },3500);
+  // Comet shower
+  setTimeout(()=>{
+    showGodVoice('THE COSMOS STIRS');
+    for(let i=0;i<4;i++){
+      setTimeout(()=>{
+        const side=Math.floor(Math.random()*4);
+        let cx2,cy2,vx2,vy2;
+        if(side===0){cx2=Math.random()*W;cy2=-20;vx2=(Math.random()-.5)*4;vy2=2+Math.random()*4;}
+        else if(side===1){cx2=W+20;cy2=Math.random()*H;vx2=-(2+Math.random()*4);vy2=(Math.random()-.5)*4;}
+        else if(side===2){cx2=Math.random()*W;cy2=H+20;vx2=(Math.random()-.5)*4;vy2=-(2+Math.random()*4);}
+        else{cx2=-20;cy2=Math.random()*H;vx2=2+Math.random()*4;vy2=(Math.random()-.5)*4;}
+        createComet(cx2,cy2,vx2,vy2);
+      },i*600);
+    }
+  },6000);
+  setTimeout(()=>showGodVoice('THE UNIVERSE AWAITS YOUR WILL'),9000);
+}
+
+// ── SHOW UI ───────────────────────────────────────────────
+function beginCreation(){
+  document.getElementById('intro').classList.add('fade');
+  setTimeout(()=>{
+    document.getElementById('intro').style.display='none';
+    // Check if tutorial should be shown
+    if(!localStorage.getItem('cosmosSkipTutorial')){
+      document.getElementById('tutorial').classList.add('show');
+    } else {
+      startGame();
+    }
+  },1500);
+}
+
+function startGame(){
+  ['hud','tools','power-wrap','eventlog','hint'].forEach(id=>document.getElementById(id).classList.add('show'));
+  document.getElementById('timectrl').classList.add('show');
+  gameRunning=true;
+  bigBang();
+}
+
+function closeTutorial(){
+  document.getElementById('tutorial').classList.remove('show');
+  startGame();
+}
+
+function skipTutorial(){
+  localStorage.setItem('cosmosSkipTutorial','true');
+  document.getElementById('tutorial').classList.remove('show');
+  startGame();
+}
+</script>
+</body>
+</html>
