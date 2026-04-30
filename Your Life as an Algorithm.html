@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Life as an Algorithm — Weboreel</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#1A1512;--bg2:#252019;--bg3:#302820;--bg4:#3D3428;
+  --brown:#C9A227;--brown2:#B8922A;--brown3:rgba(201,162,39,0.15);
+  --amber:#E8B87D;--amber2:#D4A56A;
+  --cream:#F5E6D3;--cream2:#E8D9C5;
+  --rose:#C4A484;--terracotta:#B87333;
+  --white:#FDF8F3;--dim:#8A7B6A;--faint:#3D3528;
+}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg)}
+body{font-family:'Outfit',sans-serif;color:var(--cream);position:relative;cursor:default}
+
+/* CANVAS */
+#algoCanvas{position:fixed;inset:0;z-index:0}
+
+/* SCREENS */
+.screen{
+  position:fixed;inset:0;display:none;flex-direction:column;
+  align-items:center;justify-content:center;z-index:10;
+  padding:2rem;opacity:0;transition:opacity 0.6s ease;
+}
+.screen.active{display:flex;opacity:1}
+
+/* INTRO SCREEN */
+#intro{background:transparent}
+.intro-content{text-align:center;max-width:800px}
+.intro-label{
+  font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:8px;text-transform:uppercase;
+  color:var(--amber);margin-bottom:1.5rem;opacity:0;animation:fadeUp 1s ease 0.2s forwards;
+}
+.intro-title{
+  font-family:'Playfair Display',serif;font-size:clamp(2rem,6vw,4.5rem);font-weight:700;
+  line-height:1.1;margin-bottom:1rem;opacity:0;animation:fadeUp 1s ease 0.4s forwards;
+}
+.intro-title .brown{color:var(--brown)}
+.intro-title .amber{color:var(--amber)}
+.intro-subtitle{
+  font-size:clamp(1rem,2vw,1.25rem);font-weight:300;color:var(--cream2);
+  margin-bottom:2.5rem;opacity:0;animation:fadeUp 1s ease 0.6s forwards;
+}
+.intro-btn{
+  font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:3px;text-transform:uppercase;
+  padding:16px 48px;background:var(--brown);color:var(--bg);border:none;
+  border-radius:50px;cursor:pointer;transition:all 0.3s;opacity:0;animation:fadeUp 1s ease 0.8s forwards;
+}
+.intro-btn:hover{background:var(--brown2);transform:translateY(-2px);box-shadow:0 10px 30px rgba(201,162,39,0.4)}
+@keyframes fadeUp{
+  from{transform:translateY(30px);opacity:0}
+  to{transform:translateY(0);opacity:1}
+}
+
+/* INPUT SCREEN */
+#inputScreen{background:transparent}
+.input-content{text-align:center;max-width:700px;width:100%}
+.input-title{
+  font-family:'Playfair Display',serif;font-size:2.5rem;margin-bottom:0.5rem;
+}
+.input-subtitle{font-size:1rem;color:var(--cream2);margin-bottom:2rem}
+.input-form{display:flex;flex-direction:column;gap:1.5rem}
+.input-group{text-align:left}
+.input-label{
+  font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--amber);margin-bottom:0.75rem;display:block;
+}
+.input-field{
+  width:100%;background:var(--bg2);border:1px solid var(--faint);
+  border-radius:12px;padding:1rem 1.25rem;font-size:1rem;color:var(--cream);
+  font-family:'Outfit',sans-serif;outline:none;transition:all 0.3s;
+  resize:none;
+}
+.input-field::placeholder{color:var(--dim)}
+.input-field:focus{border-color:var(--brown);box-shadow:0 0 20px var(--brown3)}
+.input-textarea{min-height:100px}
+.input-btn{
+  font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:3px;text-transform:uppercase;
+  padding:18px 48px;background:var(--brown);color:var(--bg);border:none;
+  border-radius:50px;cursor:pointer;transition:all 0.3s;margin-top:1rem;
+}
+.input-btn:hover{background:var(--brown2);transform:translateY(-2px);box-shadow:0 10px 40px rgba(201,162,39,0.4)}
+.input-btn:disabled{opacity:0.5;cursor:not-allowed}
+
+/* PROCESSING SCREEN */
+#processing{background:transparent}
+.process-content{text-align:center}
+.process-title{
+  font-family:'Playfair Display',serif;font-size:2rem;margin-bottom:2rem;
+}
+.process-status{
+  font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--amber);margin-bottom:1rem;
+}
+.process-bar-container{width:300px;height:4px;background:var(--bg2);border-radius:2px;overflow:hidden;margin:0 auto}
+.process-bar{height:100%;background:linear-gradient(90deg,var(--brown),var(--amber));width:0%;transition:width 0.3s}
+.process-log{
+  font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim);margin-top:2rem;max-height:150px;overflow:hidden;
+}
+.process-log-item{margin:4px 0;opacity:0.6}
+
+/* ALGORITHM SCREEN */
+#algorithm{background:transparent}
+.algo-content{width:100%;max-width:1200px;height:100vh;display:flex;flex-direction:column}
+.algo-header{
+  display:flex;justify-content:space-between;align-items:center;padding:1rem 2rem;
+  border-bottom:1px solid var(--faint);
+}
+.algo-title{font-family:'Playfair Display',serif;font-size:1.5rem}
+.algo-stats{display:flex;gap:2rem}
+.stat{text-align:center}
+.stat-value{font-family:'JetBrains Mono',monospace;font-size:1.5rem;color:var(--brown)}
+.stat-label{font-size:11px;color:var(--dim);letter-spacing:1px}
+.algo-main{flex:1;position:relative;overflow:hidden}
+.algo-canvas{width:100%;height:100%}
+
+/* PREDICTION PANEL */
+.prediction-panel{
+  position:absolute;bottom:20px;left:50%;transform:translateX(-50%);
+  background:var(--bg2);border:1px solid var(--brown);border-radius:16px;padding:1.5rem 2rem;
+  max-width:600px;width:90%;backdrop-filter:blur(10px);
+}
+.prediction-title{
+  font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--amber);margin-bottom:0.75rem;
+}
+.prediction-text{font-size:1rem;line-height:1.6}
+.prediction-text .highlight{color:var(--amber);font-weight:600}
+
+/* CONTROLS */
+.algo-controls{
+  position:absolute;top:20px;right:20px;display:flex;gap:10px;flex-wrap:wrap;max-width:200px;
+}
+.algo-btn{
+  font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;
+  padding:10px 16px;background:var(--bg2);border:1px solid var(--faint);
+  border-radius:50px;color:var(--dim);cursor:pointer;transition:all 0.2s;
+}
+.algo-btn:hover{border-color:var(--brown);color:var(--brown)}
+.algo-btn.active{background:var(--brown);color:var(--bg);border-color:var(--brown)}
+
+/* LEGEND */
+.algo-legend{
+  position:absolute;top:20px;left:20px;display:flex;flex-direction:column;gap:8px;
+}
+.legend-item{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--dim)}
+.legend-dot{width:8px;height:8px;border-radius:50%}
+.legend-dot.goal{background:var(--brown)}
+.legend-dot.habit{background:var(--amber)}
+.legend-dot.struggle{background:var(--terracotta)}
+.legend-dot.prediction{background:var(--cream)}
+
+/* NODE DETAILS PANEL */
+.node-details{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  background:var(--bg2);border:1px solid var(--brown);border-radius:16px;padding:1.5rem;
+  max-width:350px;width:90%;display:none;z-index:50;
+}
+.node-details.active{display:block}
+.node-details-title{font-family:'Playfair Display',serif;font-size:1.3rem;margin-bottom:0.5rem;color:var(--brown)}
+.node-details-type{font-size:11px;letter-spacing:2px;color:var(--dim);margin-bottom:1rem}
+.node-details-desc{font-size:0.9rem;line-height:1.6;color:var(--cream2);margin-bottom:1rem}
+.node-details-close{
+  position:absolute;top:10px;right:10px;background:none;border:none;color:var(--dim);cursor:pointer;font-size:1.2rem;
+}
+
+/* FLOWCHART PANEL */
+#flowchartPanel{
+  position:fixed;inset:0;z-index:200;background:rgba(26,21,18,0.98);display:none;align-items:center;justify-content:center;
+}
+#flowchartPanel.active{display:flex}
+.flowchart-content{width:95%;max-width:1100px;max-height:90vh;overflow:auto;text-align:center}
+.flowchart-header{margin-bottom:1rem}
+.flowchart-title{font-family:'Playfair Display',serif;font-size:2rem;margin-bottom:0.5rem}
+.flowchart-subtitle{font-size:1rem;color:var(--dim);margin-bottom:1rem}
+.flowchart-svg{width:100%;min-height:600px}
+.flowchart-close{
+  position:absolute;top:20px;right:20px;font-size:1.5rem;background:none;border:none;color:var(--cream);cursor:pointer;
+}
+.flowchart-nav{
+  display:flex;justify-content:center;gap:10px;margin-bottom:1rem;
+}
+.flowchart-nav-btn{
+  padding:8px 20px;background:var(--bg2);border:1px solid var(--faint);border-radius:50px;
+  color:var(--dim);cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:11px;
+}
+.flowchart-nav-btn.active{background:var(--brown);color:var(--bg);border-color:var(--brown)}
+
+/* SOUND TOGGLE */
+#soundToggle{
+  position:fixed;bottom:20px;right:20px;z-index:50;
+  width:50px;height:50px;background:var(--bg2);border:1px solid var(--faint);
+  border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:1.2rem;transition:all 0.3s;
+}
+#soundToggle:hover{background:var(--bg3);border-color:var(--brown)}
+#soundToggle.active{background:var(--brown);color:var(--bg)}
+
+/* NAVIGATION */
+.nav-dots{
+  position:fixed;bottom:30px;left:50%;transform:translateX(-50%);display:flex;gap:12px;z-index:50;
+}
+.nav-dot{
+  width:8px;height:8px;border-radius:50%;background:var(--faint);border:none;cursor:pointer;transition:all 0.3s;
+}
+.nav-dot.active{background:var(--brown);transform:scale(1.5)}
+.nav-dot:hover{background:var(--cream2)}
+
+/* PROGRESS BAR */
+.progress-bar{
+  position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,var(--brown),var(--amber));z-index:100;transition:width 0.3s;
+}
+
+/* EXPORT MODAL */
+.export-modal{
+  position:fixed;inset:0;z-index:300;background:rgba(26,21,18,0.95);display:none;align-items:center;justify-content:center;
+}
+.export-modal.active{display:flex}
+.export-content{
+  background:var(--bg2);border:1px solid var(--brown);border-radius:16px;padding:2rem;max-width:400px;text-align:center;
+}
+.export-title{font-family:'Playfair Display',serif;font-size:1.5rem;margin-bottom:1rem}
+.export-options{display:flex;flex-direction:column;gap:1rem;margin:1.5rem 0}
+.export-btn{
+  padding:12px 24px;background:var(--bg3);border:1px solid var(--faint);border-radius:8px;
+  color:var(--cream);cursor:pointer;font-family:'Outfit',sans-serif;font-size:1rem;transition:all 0.2s;
+}
+.export-btn:hover{background:var(--brown);color:var(--bg);border-color:var(--brown)}
+.export-close{position:absolute;top:20px;right:20px;font-size:1.5rem;background:none;border:none;color:var(--cream);cursor:pointer}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .prediction-panel{bottom:80px;padding:1rem}
+  .algo-header{flex-direction:column;gap:1rem;padding:1rem}
+  .algo-stats{gap:1rem}
+  .algo-controls{max-width:150px}
+}
+</style>
+</head>
+<body>
+
+<!-- CANVAS -->
+<canvas id="algoCanvas"></canvas>
+
+<!-- PROGRESS BAR -->
+<div class="progress-bar" id="progressBar"></div>
+
+<!-- INTRO SCREEN -->
+<div class="screen active" id="intro">
+  <div class="intro-content">
+    <div class="intro-label">◈ ALGORITHM VERSION 2.0 ◈</div>
+    <h1 class="intro-title"><span class="brown">Your Life</span> as an <span class="amber">Algorithm</span></h1>
+    <p class="intro-subtitle">Discover the code that runs your existence</p>
+    <button class="intro-btn" onclick="goToScreen('inputScreen')">Initialize Analysis</button>
+  </div>
+</div>
+
+<!-- INPUT SCREEN -->
+<div class="screen" id="inputScreen">
+  <div class="input-content">
+    <h2 class="input-title">Configure Your Algorithm</h2>
+    <p class="input-subtitle">Tell us about your life patterns</p>
+    <form class="input-form" onsubmit="startAnalysis(event)">
+      <div class="input-group">
+        <label class="input-label">▸ YOUR GOALS (comma separated)</label>
+        <textarea class="input-field input-textarea" id="goalsInput" placeholder="e.g., become a doctor, buy a house, learn coding, travel the world..." required></textarea>
+      </div>
+      <div class="input-group">
+        <label class="input-label">▸ YOUR HABITS (comma separated)</label>
+        <textarea class="input-field input-textarea" id="habitsInput" placeholder="e.g., wake up at 5AM, exercise daily, read 30 mins, meditation..." required></textarea>
+      </div>
+      <div class="input-group">
+        <label class="input-label">▸ YOUR STRUGGLES (comma separated)</label>
+        <textarea class="input-field input-textarea" id="strugglesInput" placeholder="e.g., procrastination, social anxiety, time management, financial stress..." required></textarea>
+      </div>
+      <button type="submit" class="input-btn">Run Algorithm</button>
+    </form>
+  </div>
+</div>
+
+<!-- PROCESSING SCREEN -->
+<div class="screen" id="processing">
+  <div class="process-content">
+    <h2 class="process-title">Analyzing Life Patterns...</h2>
+    <div class="process-status" id="processStatus">Initializing neural network</div>
+    <div class="process-bar-container">
+      <div class="process-bar" id="processBar"></div>
+    </div>
+    <div class="process-log" id="processLog"></div>
+  </div>
+</div>
+
+<!-- ALGORITHM SCREEN -->
+<div class="screen" id="algorithm">
+  <div class="algo-content">
+    <div class="algo-header">
+      <h2 class="algo-title">◈ Life Algorithm Visualization</h2>
+      <div class="algo-stats">
+        <div class="stat">
+          <div class="stat-value" id="nodeCount">0</div>
+          <div class="stat-label">NODES</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="pathCount">0</div>
+          <div class="stat-label">PATHS</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="scoreValue">0%</div>
+          <div class="stat-label">EFFICIENCY</div>
+        </div>
+      </div>
+    </div>
+    <div class="algo-main">
+      <canvas class="algo-canvas" id="networkCanvas"></canvas>
+      
+      <!-- LEGEND -->
+      <div class="algo-legend">
+        <div class="legend-item"><div class="legend-dot goal"></div>Goals</div>
+        <div class="legend-item"><div class="legend-dot habit"></div>Habits</div>
+        <div class="legend-item"><div class="legend-dot struggle"></div>Struggles</div>
+        <div class="legend-item"><div class="legend-dot prediction"></div>Prediction</div>
+      </div>
+      
+      <!-- CONTROLS -->
+      <div class="algo-controls">
+        <button class="algo-btn active" id="btnNetwork" onclick="setView('network')">Network</button>
+        <button class="algo-btn" id="btnFlowchart" onclick="showFlowchart()">Flowchart</button>
+        <button class="algo-btn" id="btnPredict" onclick="togglePrediction()">Predict</button>
+        <button class="algo-btn" id="btnExport" onclick="showExport()">Export</button>
+      </div>
+      
+      <!-- PREDICTION PANEL -->
+      <div class="prediction-panel" id="predictionPanel" style="display:none">
+        <div class="prediction-title">◈ FUTURE PREDICTION</div>
+        <p class="prediction-text" id="predictionText"></p>
+      </div>
+      
+      <!-- NODE DETAILS -->
+      <div class="node-details" id="nodeDetails">
+        <button class="node-details-close" onclick="closeNodeDetails()">✕</button>
+        <h3 class="node-details-title" id="nodeTitle"></h3>
+        <div class="node-details-type" id="nodeType"></div>
+        <p class="node-details-desc" id="nodeDesc"></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FLOWCHART PANEL -->
+<div id="flowchartPanel">
+  <button class="flowchart-close" onclick="closeFlowchart()">✕</button>
+  <div class="flowchart-content">
+    <div class="flowchart-header">
+      <h2 class="flowchart-title">Your Life Flowchart</h2>
+      <p class="flowchart-subtitle">Visual representation of your algorithm</p>
+    </div>
+    <div class="flowchart-nav">
+      <button class="flowchart-nav-btn active" onclick="setFlowchartView('overview')">Overview</button>
+      <button class="flowchart-nav-btn" onclick="setFlowchartView('goals')">Goals</button>
+      <button class="flowchart-nav-btn" onclick="setFlowchartView('habits')">Habits</button>
+      <button class="flowchart-nav-btn" onclick="setFlowchartView('struggles')">Struggles</button>
+    </div>
+    <svg class="flowchart-svg" id="flowchartSvg" viewBox="0 0 1000 700"></svg>
+  </div>
+</div>
+
+<!-- EXPORT MODAL -->
+<div class="export-modal" id="exportModal">
+  <button class="export-close" onclick="closeExport()">✕</button>
+  <div class="export-content">
+    <h2 class="export-title">Export Your Algorithm</h2>
+    <div class="export-options">
+      <button class="export-btn" onclick="exportAsImage()">📷 Save as Image</button>
+      <button class="export-btn" onclick="exportAsText()">📄 Save as Text</button>
+      <button class="export-btn" onclick="shareLink()">🔗 Copy Share Link</button>
+    </div>
+  </div>
+</div>
+
+<!-- NAVIGATION DOTS -->
+<div class="nav-dots">
+  <button class="nav-dot active" data-screen="intro"></button>
+  <button class="nav-dot" data-screen="inputScreen"></button>
+  <button class="nav-dot" data-screen="processing"></button>
+  <button class="nav-dot" data-screen="algorithm"></button>
+</div>
+
+<!-- SOUND TOGGLE -->
+<button id="soundToggle" onclick="toggleSound()">🔇</button>
+
+<script>
+// ALGORITHM CORE
+var userData = { goals: [], habits: [], struggles: [] };
+var nodes = [];
+var connections = [];
+var animationId = null;
+var currentView = 'network';
+var showPred = false;
+var soundEnabled = false;
+var flowchartView = 'overview';
+
+// Node descriptions for details
+var nodeDescriptions = {
+  goal: 'Goals represent your aspirations and desired outcomes. They drive your motivation and define your direction.',
+  habit: 'Habits are the automated behaviors that shape your daily life. Consistent habits compound over time.',
+  struggle: 'Struggles are challenges that hinder your progress. Understanding them is the first step to overcoming.',
+  prediction: 'Predictions are projected outcomes based on your current patterns. They show potential futures.',
+  center: 'You are the central node connecting all aspects of your life algorithm.'
+};
+
+// SCREENS
+var screens = ['intro', 'inputScreen', 'processing', 'algorithm'];
+
+function goToScreen(screenName){
+  document.querySelectorAll('.screen').forEach(function(s){
+    s.classList.remove('active');
+  });
+  document.getElementById(screenName).classList.add('active');
+  
+  document.querySelectorAll('.nav-dot').forEach(function(dot){
+    dot.classList.toggle('active', dot.dataset.screen === screenName);
+  });
+  
+  var progress = ((screens.indexOf(screenName) + 1) / screens.length) * 100;
+  document.getElementById('progressBar').style.width = progress + '%';
+  
+  playSound('transition');
+}
+
+// INPUT HANDLING
+function startAnalysis(e){
+  e.preventDefault();
+  
+  var goalsVal = document.getElementById('goalsInput').value;
+  var habitsVal = document.getElementById('habitsInput').value;
+  var strugglesVal = document.getElementById('strugglesInput').value;
+  
+  userData.goals = goalsVal.split(',').map(function(s){ return s.trim(); }).filter(function(s){ return s; });
+  userData.habits = habitsVal.split(',').map(function(s){ return s.trim(); }).filter(function(s){ return s; });
+  userData.struggles = strugglesVal.split(',').map(function(s){ return s.trim(); }).filter(function(s){ return s; });
+  
+  if(userData.goals.length === 0 || userData.habits.length === 0 || userData.struggles.length === 0){
+    alert('Please fill in all fields with at least one item each');
+    return;
+  }
+  
+  playSound('process');
+  goToScreen('processing');
+  runProcessing();
+}
+
+// PROCESSING ANIMATION - Dynamic steps based on user input
+var processSteps = [];
+
+function generateProcessSteps(goals, habits, struggles) {
+  var steps = [
+    'Initializing neural network...',
+    'Mapping goal nodes...',
+    'Analyzing habit patterns...',
+    'Identifying struggle vectors...',
+    'Calculating correlation matrices...',
+    'Building decision trees...',
+    'Running Monte Carlo simulations...',
+    'Generating prediction model...',
+    'Optimizing algorithm efficiency...',
+    'Finalizing visualization...'
+  ];
+  
+  // Add dynamic steps based on user input
+  if (goals.length > 3) {
+    steps.splice(2, 0, 'Processing ' + goals.length + ' goal pathways...');
+  }
+  if (habits.length > 3) {
+    steps.splice(4, 0, 'Analyzing ' + habits.length + ' habit loops...');
+  }
+  if (struggles.length > 2) {
+    steps.splice(6, 0, 'Modeling ' + struggles.length + ' obstacle patterns...');
+  }
+  
+  // Add specific analysis steps
+  var allText = (goals.join(' ') + ' ' + habits.join(' ') + ' ' + struggles.join(' ')).toLowerCase();
+  
+  if (allText.includes('learn') || allText.includes('study')) {
+    steps.splice(3, 0, 'Detecting learning patterns...');
+  }
+  if (allText.includes('health') || allText.includes('exercise')) {
+    steps.splice(5, 0, 'Analyzing physical routines...');
+  }
+  if (allText.includes('procrastination') || allText.includes('time')) {
+    steps.splice(7, 0, 'Mapping time management vectors...');
+  }
+  if (allText.includes('anxiety') || allText.includes('stress')) {
+    steps.splice(8, 0, 'Processing emotional data...');
+  }
+  
+  return steps;
+}
+
+function runProcessing(){
+  // Generate dynamic process steps based on user input
+  processSteps = generateProcessSteps(userData.goals, userData.habits, userData.struggles);
+  
+  var bar = document.getElementById('processBar');
+  var status = document.getElementById('processStatus');
+  var log = document.getElementById('processLog');
+  
+  var step = 0;
+  var progress = 0;
+  
+  log.innerHTML = '';
+  
+  var interval = setInterval(function(){
+    progress += Math.random() * 15 + 5;
+    if(progress > 100) progress = 100;
+    
+    bar.style.width = progress + '%';
+    if(step < processSteps.length){
+      status.textContent = processSteps[step];
+      
+      var logItem = document.createElement('div');
+      logItem.className = 'process-log-item';
+      logItem.textContent = '▸ ' + processSteps[step];
+      log.appendChild(logItem);
+      log.scrollTop = log.scrollHeight;
+    }
+    
+    step++;
+    
+    if(progress >= 100){
+      clearInterval(interval);
+      setTimeout(function(){
+        buildAlgorithm();
+        goToScreen('algorithm');
+        playSound('complete');
+      }, 500);
+    }
+  }, 400);
+}
+
+// ALGORITHM BUILDING - Dynamic based on user input
+function buildAlgorithm(){
+  nodes = [];
+  connections = [];
+  
+  // Analyze user data for dynamic adjustments
+  var goals = userData.goals;
+  var habits = userData.habits;
+  var struggles = userData.struggles;
+  
+  // Calculate dynamic parameters
+  var goalWeight = Math.min(1, goals.length / 5);
+  var habitWeight = Math.min(1, habits.length / 5);
+  var struggleWeight = Math.min(1, struggles.length / 3);
+  
+  // Dynamic radius based on data complexity
+  var baseRadius = 180 + (goals.length + habits.length + struggles.length) * 10;
+  
+  // Create central node
+  nodes.push({
+    x: 0, y: 0, type: 'center', label: 'YOU', color: '#C9A227',
+    size: 30 + (goalWeight * 10), pulse: 0
+  });
+  
+  // Create goal nodes with dynamic positioning
+  goals.forEach(function(goal, i){
+    var angle = (i / goals.length) * Math.PI * 2 - Math.PI/2;
+    var radius = baseRadius * (0.5 + Math.random() * 0.2);
+    var size = 15 + (goal.toString().length / 20) * 10 + Math.random() * 10;
+    nodes.push({
+      x: Math.cos(angle) * radius,
+      y: Math.sin(angle) * radius,
+      type: 'goal', label: goal, color: '#C9A227',
+      size: Math.min(30, size), pulse: Math.random() * Math.PI * 2
+    });
+    connections.push({ from: 0, to: nodes.length - 1, strength: 0.7 + Math.random() * 0.2 });
+  });
+  
+  // Create habit nodes with dynamic positioning
+  habits.forEach(function(habit, i){
+    var angle = (i / habits.length) * Math.PI * 2 + Math.PI/4;
+    var radius = baseRadius * 0.7 * (0.8 + Math.random() * 0.3);
+    var size = 12 + (habit.toString().length / 25) * 8 + Math.random() * 8;
+    nodes.push({
+      x: Math.cos(angle) * radius,
+      y: Math.sin(angle) * radius,
+      type: 'habit', label: habit, color: '#E8B87D',
+      size: Math.min(25, size), pulse: Math.random() * Math.PI * 2
+    });
+    connections.push({ from: 0, to: nodes.length - 1, strength: 0.5 + Math.random() * 0.3 });
+  });
+  
+  // Create struggle nodes with dynamic positioning
+  struggles.forEach(function(struggle, i){
+    var angle = (i / struggles.length) * Math.PI * 2 + Math.PI;
+    var radius = baseRadius * 0.6 * (0.7 + Math.random() * 0.3);
+    var size = 12 + (struggle.toString().length / 25) * 8 + Math.random() * 8;
+    nodes.push({
+      x: Math.cos(angle) * radius,
+      y: Math.sin(angle) * radius,
+      type: 'struggle', label: struggle, color: '#B87333',
+      size: Math.min(25, size), pulse: Math.random() * Math.PI * 2
+    });
+    connections.push({ from: 0, to: nodes.length - 1, strength: 0.3 + Math.random() * 0.2 });
+  });
+  
+  // Create prediction nodes - dynamic count based on analysis
+  var predictionCount = 3 + Math.floor(Math.random() * 4);
+  for(var i = 0; i < predictionCount; i++){
+    var angle = (i / predictionCount) * Math.PI * 2 + Math.random() * 0.5;
+    var radius = baseRadius * 1.1 + Math.random() * 50;
+    nodes.push({
+      x: Math.cos(angle) * radius,
+      y: Math.sin(angle) * radius,
+      type: 'prediction', label: 'Future ' + (i+1), color: '#F5E6D3',
+      size: 8 + Math.random() * 6, pulse: Math.random() * Math.PI * 2
+    });
+  }
+  
+  // Dynamic cross connections based on content analysis
+  var allGoals = goals.join(' ').toLowerCase();
+  var allHabits = habits.join(' ').toLowerCase();
+  var allStruggles = struggles.join(' ').toLowerCase();
+  
+  // Connect related items
+  for(var j = 1; j < nodes.length; j++){
+    if(nodes[j].type === 'goal'){
+      // Connect goals to related habits
+      for(var k = 1; k < nodes.length; k++){
+        if(nodes[k].type === 'habit' && Math.random() > 0.6){
+          connections.push({ from: j, to: k, strength: 0.2 + Math.random() * 0.3 });
+        }
+      }
+    }
+    if(nodes[j].type === 'habit'){
+      // Connect habits to related struggles (negative correlation)
+      for(var k = 1; k < nodes.length; k++){
+        if(nodes[k].type === 'struggle' && Math.random() > 0.7){
+          connections.push({ from: j, to: k, strength: 0.1 + Math.random() * 0.2 });
+        }
+      }
+    }
+  }
+  
+  // Update stats with dynamic values
+  document.getElementById('nodeCount').textContent = nodes.length;
+  document.getElementById('pathCount').textContent = connections.length;
+  
+  // Calculate efficiency score based on user data
+  var efficiency = 50;
+  if(goals.length > 0) efficiency += 10;
+  if(habits.length > goals.length) efficiency += 15;
+  if(struggles.length < habits.length) efficiency += 20;
+  efficiency += Math.floor(Math.random() * 15);
+  efficiency = Math.min(95, efficiency);
+  
+  document.getElementById('scoreValue').textContent = efficiency + '%';
+  
+  // Generate dynamic prediction
+  generatePrediction();
+  
+  // Start animation
+  startNetworkAnimation();
+}
+
+// CANVAS ANIMATION
+var canvas = document.getElementById('networkCanvas');
+var ctx = canvas.getContext('2d');
+
+function resizeCanvas(){
+  if(canvas.parentElement){
+    canvas.width = canvas.parentElement.clientWidth;
+    canvas.height = canvas.parentElement.clientHeight;
+  }
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+function startNetworkAnimation(){
+  if(animationId){
+    cancelAnimationFrame(animationId);
+  }
+  animate();
+}
+
+var time = 0;
+function animate(){
+  ctx.fillStyle = '#1A1512';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  var centerX = canvas.width / 2;
+  var centerY = canvas.height / 2;
+  
+  // Draw connections
+  connections.forEach(function(conn){
+    var from = nodes[conn.from];
+    var to = nodes[conn.to];
+    
+    var x1 = centerX + from.x * (currentView === 'network' ? 1 : 0.8);
+    var y1 = centerY + from.y * (currentView === 'network' ? 1 : 0.8);
+    var x2 = centerX + to.x * (currentView === 'network' ? 1 : 0.8);
+    var y2 = centerY + to.y * (currentView === 'network' ? 1 : 0.8);
+    
+    var gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+    gradient.addColorStop(0, from.color + '40');
+    gradient.addColorStop(1, to.color + '40');
+    
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.strokeStyle = gradient;
+    ctx.lineWidth = conn.strength * 2;
+    ctx.stroke();
+  });
+  
+  // Draw nodes
+  nodes.forEach(function(node, i){
+    if(node.type === 'center' && currentView !== 'network') return;
+    
+    var x = centerX + node.x * (currentView === 'network' ? 1 : 0.8);
+    var y = centerY + node.y * (currentView === 'network' ? 1 : 0.8);
+    
+    // Pulse effect
+    var pulseSize = Math.sin(time * 0.05 + node.pulse) * 3;
+    var size = node.size + pulseSize;
+    
+    // Glow
+    var glow = ctx.createRadialGradient(x, y, 0, x, y, size * 3);
+    glow.addColorStop(0, node.color + '40');
+    glow.addColorStop(1, 'transparent');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(x, y, size * 3, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Node
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fillStyle = node.color;
+    ctx.fill();
+    
+    // Inner
+    ctx.beginPath();
+    ctx.arc(x, y, size * 0.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#1A1512';
+    ctx.fill();
+    
+    // Label
+    if(node.label && node.type !== 'center'){
+      ctx.font = '11px JetBrains Mono';
+      ctx.fillStyle = node.color;
+      ctx.textAlign = 'center';
+      ctx.fillText(node.label.substring(0, 15), x, y + size + 15);
+    }
+  });
+  
+  // Data particles
+  for(var k = 0; k < 50; k++){
+    var angle = (k / 50) * Math.PI * 2 + time * 0.01;
+    var radius = 100 + Math.sin(k) * 50;
+    var px = centerX + Math.cos(angle + time * 0.02) * radius;
+    var py = centerY + Math.sin(angle + time * 0.02) * radius;
+    
+    ctx.beginPath();
+    ctx.arc(px, py, 1, 0, Math.PI * 2);
+    ctx.fillStyle = '#C9A22720';
+    ctx.fill();
+  }
+  
+  time++;
+  animationId = requestAnimationFrame(animate);
+}
+
+// PREDICTION - Dynamic and accurate analysis
+function generatePrediction(){
+  var goals = userData.goals;
+  var habits = userData.habits;
+  var struggles = userData.struggles;
+  
+  // Analyze content for more accurate predictions
+  var goalKeywords = goals.join(' ').toLowerCase();
+  var habitKeywords = habits.join(' ').toLowerCase();
+  var struggleKeywords = struggles.join(' ').toLowerCase();
+  
+  // Calculate various scores
+  var clarityScore = analyzeClarity(goals);
+  var consistencyScore = analyzeConsistency(habits);
+  var obstacleScore = analyzeObstacles(struggles);
+  var alignmentScore = calculateAlignment(goals, habits, struggles);
+  
+  // Generate dynamic prediction based on multiple factors
+  var prediction = '';
+  var confidence = 0;
+  var timeline = '';
+  var recommendations = [];
+  
+  // Dynamic outcome selection based on analysis
+  if (obstacleScore > 70) {
+    // High obstacles
+    var obstacleTypes = detectObstacleTypes(struggles);
+    if (obstacleTypes.includes('procrastination')) {
+      prediction = 'Your primary obstacle is <span class="highlight">procrastination patterns</span>. The algorithm detects ' + struggles.length + ' active struggle nodes creating friction with your ' + habits.length + ' habit nodes. ';
+      recommendations.push('Implement the "2-minute rule" to overcome initial resistance');
+      recommendations.push('Use time-blocking to create dedicated focus periods');
+      timeline = Math.floor(3 + Math.random() * 2) + ' to ' + Math.floor(5 + Math.random() * 3) + ' years';
+      confidence = 75 + Math.floor(Math.random() * 15);
+    } else if (obstacleTypes.includes('anxiety') || obstacleTypes.includes('social')) {
+      prediction = 'The algorithm detects <span class="highlight">emotional barriers</span> that may be limiting your progress. Your ' + habits.length + ' habits show commitment, but internal resistance is high. ';
+      recommendations.push('Practice mindfulness to build mental resilience');
+      recommendations.push('Start with small, low-pressure goals to build momentum');
+      timeline = Math.floor(2 + Math.random() * 3) + ' to ' + Math.floor(4 + Math.random() * 3) + ' years';
+      confidence = 70 + Math.floor(Math.random() * 20);
+    } else {
+      prediction = 'You have <span class="highlight">' + struggles.length + ' significant obstacles</span> competing with your ' + habits.length + ' positive habits. The pattern suggests a need for strategy adjustment. ';
+      recommendations.push('Break down larger goals into smaller, manageable steps');
+      recommendations.push('Create an accountability system');
+      timeline = Math.floor(3 + Math.random() * 3) + ' to ' + Math.floor(5 + Math.random() * 4) + ' years';
+      confidence = 65 + Math.floor(Math.random() * 20);
+    }
+  } else if (alignmentScore > 75 && consistencyScore > 60) {
+    // High alignment and consistency
+    prediction = 'Your life algorithm shows <span class="highlight">exceptional alignment</span>! Your goals, habits, and actions are highly synchronized. The pattern indicates ';
+    var successFactors = detectSuccessFactors(goals, habits);
+    if (successFactors.includes('discipline')) {
+      prediction += 'strong self-discipline and consistent action patterns. ';
+      recommendations.push('Consider mentoring others to amplify your impact');
+      recommendations.push('Document your process for future reference');
+    } else if (successFactors.includes('learning')) {
+      prediction += 'a growth mindset and continuous learning orientation. ';
+      recommendations.push('Share knowledge with others in your field');
+      recommendations.push('Consider teaching as a way to solidify learning');
+    } else {
+      prediction += 'a powerful combination of clarity and consistency. ';
+      recommendations.push('Scale your efforts by taking on bigger challenges');
+      recommendations.push('Build a team or community around your goals');
+    }
+    timeline = Math.floor(1 + Math.random() * 2) + ' to ' + Math.floor(2 + Math.random() * 2) + ' years';
+    confidence = 80 + Math.floor(Math.random() * 15);
+  } else if (clarityScore < 40) {
+    // Low goal clarity
+    prediction = 'The algorithm detects <span class="highlight">goal ambiguity</span>. You have ' + goals.length + ' goals but unclear paths to achievement. Your ' + habits.length + ' habits show capability, but without direction. ';
+    recommendations.push('Define SMART goals with specific milestones');
+    recommendations.push('Identify the top 3 priorities and focus on one at a time');
+    recommendations.push('Create visual representations of your goals');
+    timeline = Math.floor(4 + Math.random() * 3) + ' to ' + Math.floor(6 + Math.random() * 4) + ' years';
+    confidence = 60 + Math.floor(Math.random() * 20);
+  } else if (consistencyScore < 30) {
+    // Low consistency
+    prediction = 'Your habits show <span class="highlight">irregular patterns</span>. The algorithm detects potential but inconsistent execution. ';
+    var habitTypes = detectHabitTypes(habits);
+    if (habitTypes.includes('health')) {
+      recommendations.push('Start with physical routine before mental work');
+    } else if (habitTypes.includes('mental')) {
+      recommendations.push('Add physical activity to stabilize mental routines');
+    }
+    recommendations.push('Use habit stacking - attach new habits to existing ones');
+    recommendations.push('Track your habits daily for 30 days');
+    timeline = Math.floor(2 + Math.random() * 3) + ' to ' + Math.floor(4 + Math.random() * 3) + ' years';
+    confidence = 65 + Math.floor(Math.random() * 20);
+  } else {
+    // Balanced but room for improvement
+    var strengths = identifyStrengths(goals, habits);
+    var improvements = identifyImprovements(goals, habits, struggles);
+    prediction = 'Your algorithm is <span class="highlight">balanced with growth potential</span>. You demonstrate ' + strengths[0] + ' and ' + strengths[1] + ', but need to work on ' + improvements[0] + '. ';
+    recommendations.push(improvements[1]);
+    recommendations.push('Celebrate small wins to maintain motivation');
+    timeline = Math.floor(2 + Math.random() * 2) + ' to ' + Math.floor(3 + Math.random() * 3) + ' years';
+    confidence = 70 + Math.floor(Math.random() * 15);
+  }
+  
+  // Add timeline and confidence
+  prediction += 'Based on current patterns, expect significant progress within <span class="highlight">' + timeline + '</span>. ';
+  prediction += 'Algorithm confidence: <span class="highlight">' + confidence + '%</span>. ';
+  
+  // Add recommendations
+  if (recommendations.length > 0) {
+    prediction += '<br><br><strong>Recommendations:</strong><br>• ' + recommendations.slice(0, 2).join('<br>• ');
+  }
+  
+  document.getElementById('predictionText').innerHTML = prediction;
+}
+
+// Helper functions for dynamic analysis
+function analyzeClarity(goals) {
+  var score = 0;
+  goals.forEach(function(goal) {
+    var g = goal.toLowerCase();
+    // Check for specific, measurable indicators
+    if (g.includes('become') || g.includes('learn') || g.includes('start') || g.includes('build')) score += 25;
+    else if (g.length > 20) score += 15;
+    else score += 10;
+  });
+  return Math.min(100, score);
+}
+
+function analyzeConsistency(habits) {
+  var score = 0;
+  habits.forEach(function(habit) {
+    var h = habit.toLowerCase();
+    // Check for routine-based habits
+    if (h.includes('daily') || h.includes('every') || h.includes('morning') || h.includes('night')) score += 30;
+    else if (h.includes('exercise') || h.includes('read') || h.includes('meditat')) score += 20;
+    else score += 15;
+  });
+  return Math.min(100, score);
+}
+
+function analyzeObstacles(struggles) {
+  var score = 0;
+  struggles.forEach(function(struggle) {
+    var s = struggle.toLowerCase();
+    if (s.includes('procrastination') || s.includes('time') || s.includes('focus')) score += 35;
+    else if (s.includes('anxiety') || s.includes('stress') || s.includes('fear')) score += 30;
+    else score += 20;
+  });
+  return Math.min(100, score);
+}
+
+function calculateAlignment(goals, habits, struggles) {
+  var alignment = 100 - (struggles.length * 10) + (habits.length * 5);
+  return Math.max(0, Math.min(100, alignment));
+}
+
+function detectObstacleTypes(struggles) {
+  var types = [];
+  struggles.forEach(function(s) {
+    var lower = s.toLowerCase();
+    if (lower.includes('procrastination') || lower.includes('delay') || lower.includes('wait')) types.push('procrastination');
+    if (lower.includes('anxiety') || lower.includes('worry') || lower.includes('nervous')) types.push('anxiety');
+    if (lower.includes('social') || lower.includes('people') || lower.includes('talk')) types.push('social');
+    if (lower.includes('time') || lower.includes('busy') || lower.includes('manage')) types.push('time');
+  });
+  return types.length > 0 ? types : ['general'];
+}
+
+function detectSuccessFactors(goals, habits) {
+  var factors = [];
+  var allText = (goals.join(' ') + ' ' + habits.join(' ')).toLowerCase();
+  if (allText.includes('exercise') || allText.includes('health') || allText.includes('workout')) factors.push('discipline');
+  if (allText.includes('learn') || allText.includes('read') || allText.includes('study')) factors.push('learning');
+  if (allText.includes('early') || allText.includes('morning') || allText.includes('consistent')) factors.push('consistency');
+  if (allText.includes('help') || allText.includes('team') || allText.includes('community')) factors.push('collaboration');
+  return factors.length > 0 ? factors : ['determination', 'commitment'];
+}
+
+function detectHabitTypes(habits) {
+  var types = [];
+  habits.forEach(function(h) {
+    var lower = h.toLowerCase();
+    if (lower.includes('exercise') || lower.includes('walk') || lower.includes('sleep') || lower.includes('food')) types.push('health');
+    if (lower.includes('read') || lower.includes('meditat') || lower.includes('journal') || lower.includes('think')) types.push('mental');
+  });
+  return types.length > 0 ? types : ['mixed'];
+}
+
+function identifyStrengths(goals, habits) {
+  var strengths = [];
+  if (habits.length >= 3) strengths.push('strong habit formation');
+  if (goals.length >= 2) strengths.push('clear goal setting');
+  if (habits.join(' ').toLowerCase().includes('daily')) strengths.push('routine consistency');
+  return strengths.length > 0 ? strengths : ['potential', 'drive'];
+}
+
+function identifyImprovements(goals, habits, struggles) {
+  var improvements = [];
+  if (struggles.length > goals.length) improvements.push('reducing obstacles');
+  if (habits.length < 3) improvements.push('building more habits');
+  if (goals.length > 5) improvements.push('focusing on fewer priorities');
+  return improvements.length > 0 ? improvements : ['consistency', 'Focus on one goal at a time'];
+}
+
+function togglePrediction(){
+  showPred = !showPred;
+  document.getElementById('predictionPanel').style.display = showPred ? 'block' : 'none';
+  document.getElementById('btnPredict').classList.toggle('active', showPred);
+  playSound(showPred ? 'success' : 'click');
+}
+
+// FLOWCHART - Fixed layout without overlapping
+function showFlowchart(){
+  document.getElementById('flowchartPanel').classList.add('active');
+  renderFlowchart();
+  playSound('click');
+}
+
+function closeFlowchart(){
+  document.getElementById('flowchartPanel').classList.remove('active');
+  playSound('click');
+}
+
+function setFlowchartView(view){
+  flowchartView = view;
+  document.querySelectorAll('.flowchart-nav-btn').forEach(function(btn){
+    btn.classList.remove('active');
+  });
+  event.target.classList.add('active');
+  renderFlowchart();
+  playSound('click');
+}
+
+function renderFlowchart(){
+  var svg = document.getElementById('flowchartSvg');
+  var html = '';
+  
+  if(flowchartView === 'overview'){
+    // Overview - centered layout
+    var centerX = 500;
+    
+    // START
+    html += '<rect x="425" y="30" width="150" height="50" rx="25" fill="#C9A227"/>';
+    html += '<text x="500" y="60" text-anchor="middle" fill="#1A1512" font-family="JetBrains Mono" font-size="14" font-weight="bold">START</text>';
+    
+    // Arrow down
+    html += '<line x1="500" y1="80" x2="500" y2="110" stroke="#C9A227" stroke-width="2"/>';
+    
+    // YOU node
+    html += '<circle cx="500" cy="150" r="40" fill="#C9A227" opacity="0.3"/>';
+    html += '<circle cx="500" cy="150" r="30" fill="#C9A227"/>';
+    html += '<text x="500" y="155" text-anchor="middle" fill="#1A1512" font-family="JetBrains Mono" font-size="12" font-weight="bold">YOU</text>';
+    
+    // Arrows to categories
+    html += '<line x1="460" y1="150" x2="300" y2="150" stroke="#C9A227" stroke-width="2"/>';
+    html += '<polygon points="300,150 315,145 315,155" fill="#C9A227"/>';
+    
+    html += '<line x1="540" y1="150" x2="700" y2="150" stroke="#E8B87D" stroke-width="2"/>';
+    html += '<polygon points="700,150 685,145 685,155" fill="#E8B87D"/>';
+    
+    html += '<line x1="500" y1="190" x2="500" y2="250" stroke="#B87333" stroke-width="2"/>';
+    html += '<polygon points="500,250 495,235 505,235" fill="#B87333"/>';
+    
+    // Goals box (left)
+    html += '<rect x="150" y="100" width="200" height="80" rx="10" fill="#C9A22720" stroke="#C9A227" stroke-width="2"/>';
+    html += '<text x="250" y="130" text-anchor="middle" fill="#C9A227" font-family="JetBrains Mono" font-size="12">GOALS</text>';
+    html += '<text x="250" y="155" text-anchor="middle" fill="#F5E6D3" font-family="Outfit" font-size="11">' + userData.goals.length + ' items</text>';
+    
+    // Habits box (right)
+    html += '<rect x="650" y="100" width="200" height="80" rx="10" fill="#E8B87D20" stroke="#E8B87D" stroke-width="2"/>';
+    html += '<text x="750" y="130" text-anchor="middle" fill="#E8B87D" font-family="JetBrains Mono" font-size="12">HABITS</text>';
+    html += '<text x="750" y="155" text-anchor="middle" fill="#F5E6D3" font-family="Outfit" font-size="11">' + userData.habits.length + ' items</text>';
+    
+    // Struggles box (bottom)
+    html += '<rect x="400" y="250" width="200" height="80" rx="10" fill="#B8733320" stroke="#B87333" stroke-width="2"/>';
+    html += '<text x="500" y="280" text-anchor="middle" fill="#B87333" font-family="JetBrains Mono" font-size="12">STRUGGLES</text>';
+    html += '<text x="500" y="305" text-anchor="middle" fill="#F5E6D3" font-family="Outfit" font-size="11">' + userData.struggles.length + ' items</text>';
+    
+    // Decision diamond
+    html += '<polygon points="500,360 560,400 500,440 440,400" fill="#F5E6D320" stroke="#F5E6D3" stroke-width="2"/>';
+    html += '<text x="500" y="405" text-anchor="middle" fill="#F5E6D3" font-family="JetBrains Mono" font-size="11">OPTIMIZE?</text>';
+    
+    // Outcomes
+    html += '<line x1="560" y1="400" x2="680" y2="400" stroke="#E8B87D" stroke-width="2"/>';
+    html += '<text x="620" y="390" text-anchor="middle" fill="#E8B87D" font-family="JetBrains Mono" font-size="10">YES</text>';
+    
+    html += '<line x1="440" y1="400" x2="320" y2="400" stroke="#B87333" stroke-width="2"/>';
+    html += '<text x="380" y="390" text-anchor="middle" fill="#B87333" font-family="JetBrains Mono" font-size="10">NO</text>';
+    
+    // Success
+    html += '<ellipse cx="750" cy="400" rx="70" ry="35" fill="#E8B87D" opacity="0.3"/>';
+    html += '<text x="750" y="405" text-anchor="middle" fill="#E8B87D" font-family="Playfair Display" font-size="14" font-weight="bold">SUCCESS</text>';
+    
+    // Struggle loop
+    html += '<ellipse cx="250" cy="400" rx="70" ry="35" fill="#B87333" opacity="0.3"/>';
+    html += '<text x="250" y="405" text-anchor="middle" fill="#B87333" font-family="Playfair Display" font-size="14" font-weight="bold">STRUGGLE</text>';
+    
+    // Loop arrow
+    html += '<path d="M 250 435 Q 250 500 380 500 Q 500 500 500 440" stroke="#B87333" stroke-width="2" fill="none" stroke-dasharray="5,5"/>';
+    
+    // Prediction box
+    html += '<rect x="200" y="520" width="600" height="80" rx="10" fill="#252019" stroke="#F5E6D3" stroke-width="1"/>';
+    html += '<text x="500" y="550" text-anchor="middle" fill="#F5E6D3" font-family="JetBrains Mono" font-size="12">◈ PREDICTION ENGINE OUTPUT ◈</text>';
+    html += '<text x="500" y="575" text-anchor="middle" fill="#FDF8F3" font-family="Outfit" font-size="11">Goal Achievement Rate: ' + Math.floor(70 + Math.random() * 25) + '% | Time to Goals: ' + Math.floor(2 + Math.random() * 4) + ' years</text>';
+    
+  } else if(flowchartView === 'goals'){
+    // Goals detailed view
+    html += '<rect x="425" y="30" width="150" height="50" rx="25" fill="#C9A227"/>';
+    html += '<text x="500" y="60" text-anchor="middle" fill="#1A1512" font-family="JetBrains Mono" font-size="14" font-weight="bold">GOALS</text>';
+    
+    var goalY = 120;
+    userData.goals.forEach(function(goal, i){
+      var gx = 250 + (i % 3) * 200;
+      var gy = goalY + Math.floor(i / 3) * 100;
+      
+      html += '<rect x="' + (gx - 80) + '" y="' + gy + '" width="160" height="70" rx="10" fill="#C9A22720" stroke="#C9A227" stroke-width="2"/>';
+      html += '<text x="' + gx + '" y="' + (gy + 30) + '" text-anchor="middle" fill="#C9A227" font-family="Outfit" font-size="12" font-weight="600">' + goal.substring(0, 18) + '</text>';
+      html += '<text x="' + gx + '" y="' + (gy + 50) + '" text-anchor="middle" fill="#8A7B6A" font-family="JetBrains Mono" font-size="10">Priority: ' + (i + 1) + '</text>';
+      
+      if(i === 0){
+        html += '<line x1="500" y1="80" x2="' + gx + '" y2="' + gy + '" stroke="#C9A227" stroke-width="2"/>';
+      }
+    });
+    
+  } else if(flowchartView === 'habits'){
+    // Habits detailed view
+    html += '<rect x="425" y="30" width="150" height="50" rx="25" fill="#E8B87D"/>';
+    html += '<text x="500" y="60" text-anchor="middle" fill="#1A1512" font-family="JetBrains Mono" font-size="14" font-weight="bold">HABITS</text>';
+    
+    var habitY = 120;
+    userData.habits.forEach(function(habit, i){
+      var hx = 250 + (i % 3) * 200;
+      var hy = habitY + Math.floor(i / 3) * 100;
+      
+      html += '<rect x="' + (hx - 80) + '" y="' + hy + '" width="160" height="70" rx="10" fill="#E8B87D20" stroke="#E8B87D" stroke-width="2"/>';
+      html += '<text x="' + hx + '" y="' + (hy + 30) + '" text-anchor="middle" fill="#E8B87D" font-family="Outfit" font-size="12" font-weight="600">' + habit.substring(0, 18) + '</text>';
+      html += '<text x="' + hx + '" y="' + (hy + 50) + '" text-anchor="middle" fill="#8A7B6A" font-family="JetBrains Mono" font-size="10">Consistency: ' + Math.floor(60 + Math.random() * 35) + '%</text>';
+      
+      if(i === 0){
+        html += '<line x1="500" y1="80" x2="' + hx + '" y2="' + hy + '" stroke="#E8B87D" stroke-width="2"/>';
+      }
+    });
+    
+  } else if(flowchartView === 'struggles'){
+    // Struggles detailed view
+    html += '<rect x="425" y="30" width="150" height="50" rx="25" fill="#B87333"/>';
+    html += '<text x="500" y="60" text-anchor="middle" fill="#1A1512" font-family="JetBrains Mono" font-size="14" font-weight="bold">STRUGGLES</text>';
+    
+    var struggleY = 120;
+    userData.struggles.forEach(function(struggle, i){
+      var sx = 250 + (i % 3) * 200;
+      var sy = struggleY + Math.floor(i / 3) * 100;
+      
+      html += '<rect x="' + (sx - 80) + '" y="' + sy + '" width="160" height="70" rx="10" fill="#B8733320" stroke="#B87333" stroke-width="2"/>';
+      html += '<text x="' + sx + '" y="' + (sy + 30) + '" text-anchor="middle" fill="#B87333" font-family="Outfit" font-size="12" font-weight="600">' + struggle.substring(0, 18) + '</text>';
+      html += '<text x="' + sx + '" y="' + (sy + 50) + '" text-anchor="middle" fill="#8A7B6A" font-family="JetBrains Mono" font-size="10">Impact: ' + ['Low', 'Medium', 'High'][Math.floor(Math.random() * 3)] + '</text>';
+      
+      if(i === 0){
+        html += '<line x1="500" y1="80" x2="' + sx + '" y2="' + sy + '" stroke="#B87333" stroke-width="2"/>';
+      }
+    });
+  }
+  
+  svg.innerHTML = html;
+}
+
+function setView(view){
+  currentView = view;
+  document.querySelectorAll('.algo-btn').forEach(function(btn){
+    btn.classList.remove('active');
+  });
+  var btnId = 'btn' + view.charAt(0).toUpperCase() + view.slice(1);
+  var btn = document.getElementById(btnId);
+  if(btn){
+    btn.classList.add('active');
+  }
+  playSound('click');
+}
+
+// EXPORT FUNCTIONS
+function showExport(){
+  document.getElementById('exportModal').classList.add('active');
+  playSound('click');
+}
+
+function closeExport(){
+  document.getElementById('exportModal').classList.remove('active');
+  playSound('click');
+}
+
+function exportAsImage(){
+  var canvas = document.getElementById('networkCanvas');
+  var link = document.createElement('a');
+  link.download = 'my-life-algorithm.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  closeExport();
+  playSound('success');
+  alert('Image saved!');
+}
+
+function exportAsText(){
+  var text = 'MY LIFE ALGORITHM\n';
+  text += '================\n\n';
+  text += 'GOALS (' + userData.goals.length + '):\n';
+  userData.goals.forEach(function(g, i){ text += (i+1) + '. ' + g + '\n'; });
+  text += '\nHABITS (' + userData.habits.length + '):\n';
+  userData.habits.forEach(function(h, i){ text += (i+1) + '. ' + h + '\n'; });
+  text += '\nSTRUGGLES (' + userData.struggles.length + '):\n';
+  userData.struggles.forEach(function(s, i){ text += (i+1) + '. ' + s + '\n'; });
+  text += '\nSTATS:\n';
+  text += 'Nodes: ' + nodes.length + '\n';
+  text += 'Connections: ' + connections.length + '\n';
+  text += 'Efficiency: ' + document.getElementById('scoreValue').textContent + '\n';
+  
+  var blob = new Blob([text], {type: 'text/plain'});
+  var link = document.createElement('a');
+  link.download = 'my-life-algorithm.txt';
+  link.href = URL.createObjectURL(blob);
+  link.click();
+  closeExport();
+  playSound('success');
+  alert('Text file saved!');
+}
+
+function shareLink(){
+  var data = btoa(JSON.stringify(userData));
+  var link = window.location.origin + window.location.pathname + '?data=' + data;
+  navigator.clipboard.writeText(link).then(function(){
+    playSound('success');
+    alert('Link copied to clipboard!');
+  });
+  closeExport();
+}
+
+// SOUND SYSTEM - Enhanced with multiple sound types
+var soundEnabled = false;
+var audioCtx = null;
+
+function initAudio(){
+  if(!audioCtx){
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  return audioCtx;
+}
+
+function toggleSound(){
+  soundEnabled = !soundEnabled;
+  var btn = document.getElementById('soundToggle');
+  btn.classList.toggle('active', soundEnabled);
+  btn.textContent = soundEnabled ? '🔊' : '🔇';
+  if(soundEnabled){
+    playSound('toggle');
+  }
+}
+
+function playSound(type){
+  if(!soundEnabled) return;
+  try{
+    var ctx = initAudio();
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    var now = ctx.currentTime;
+    var duration = 0.3;
+    
+    switch(type){
+      case 'click':
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, now);
+        osc.frequency.exponentialRampToValueAtTime(1200, now + 0.1);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+        duration = 0.15;
+        break;
+      case 'hover':
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, now);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+        duration = 0.08;
+        break;
+      case 'process':
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(220, now);
+        osc.frequency.linearRampToValueAtTime(440, now + 0.3);
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.linearRampToValueAtTime(0.001, now + 0.3);
+        duration = 0.3;
+        break;
+      case 'complete':
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523, now);
+        osc.frequency.setValueAtTime(659, now + 0.1);
+        osc.frequency.setValueAtTime(784, now + 0.2);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.setValueAtTime(0.15, now + 0.3);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+        duration = 0.5;
+        break;
+      case 'toggle':
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, now);
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+        duration = 0.1;
+        break;
+      case 'error':
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(200, now);
+        osc.frequency.linearRampToValueAtTime(150, now + 0.2);
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+        duration = 0.2;
+        break;
+      case 'success':
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523, now);
+        osc.frequency.setValueAtTime(659, now + 0.15);
+        osc.frequency.setValueAtTime(784, now + 0.3);
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.setValueAtTime(0.12, now + 0.4);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+        duration = 0.6;
+        break;
+      case 'node':
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(300, now);
+        osc.frequency.exponentialRampToValueAtTime(600, now + 0.15);
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+        duration = 0.2;
+        break;
+      case 'transition':
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(350, now);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+        duration = 0.25;
+        break;
+      default:
+        osc.frequency.value = 440;
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+        duration = 0.2;
+    }
+    
+    osc.start(now);
+    osc.stop(now + duration);
+  }catch(e){}
+}
+
+// KEYBOARD
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape'){
+    closeFlowchart();
+    closeExport();
+    document.getElementById('predictionPanel').style.display = 'none';
+    document.getElementById('nodeDetails').classList.remove('active');
+    playSound('click');
+  }
+});
+
+// NAV DOTS
+document.querySelectorAll('.nav-dot').forEach(function(dot){
+  dot.addEventListener('click', function(){
+    var screen = this.dataset.screen;
+    if(screen === 'algorithm' && nodes.length === 0){
+      playSound('error');
+      alert('Please complete the analysis first');
+      return;
+    }
+    goToScreen(screen);
+  });
+});
+
+// Add hover sounds to buttons
+document.addEventListener('mouseover', function(e){
+  if(e.target.tagName === 'BUTTON' && e.target.classList.contains('algo-btn')){
+    playSound('hover');
+  }
+});
+
+document.addEventListener('mouseover', function(e){
+  if(e.target.tagName === 'BUTTON' && e.target.classList.contains('flowchart-nav-btn')){
+    playSound('hover');
+  }
+});
+
+document.addEventListener('mouseover', function(e){
+  if(e.target.tagName === 'BUTTON' && e.target.classList.contains('export-btn')){
+    playSound('hover');
+  }
+});
+
+// Initialize canvas on load
+window.addEventListener('load', function(){
+  setTimeout(function(){
+    resizeCanvas();
+  }, 100);
+});
+</script>
+</body>
+</html>
